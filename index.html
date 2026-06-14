@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+ 
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Arrows - Polyomino Escape</title>
+<meta name="theme-color" content="#2D3142" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght=500;700&family=JetBrains+Mono:wght=500;700&display=swap');
+
+  /* Modern Minimalist Renk Değişkenleri */
+  :root {
+    --bg-color: #F4F4F2;
+    --card-bg: #FFFFFF;
+    --text-main: #2D3142;
+    --text-muted: #9A9A94;
+    --border-color: #ECECE8;
+    --tab-bg: #FAFAF9;
+    --board-bg: #EBEBE8;
+    --shadow-color: rgba(45, 49, 66, 0.15);
+    --accent-gradient: linear-gradient(135deg, #2EC4B6, #F4A261);
+  }
+
+  /* Karanlık Mod Değişkenleri */
+  body.dark-theme {
+    --bg-color: #121214;
+    --card-bg: #1A1A1E;
+    --text-main: #E2E2E6;
+    --text-muted: #72727A;
+    --border-color: #2A2A30;
+    --tab-bg: #222226;
+    --board-bg: #2C2C32;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --accent-gradient: linear-gradient(135deg, #2EC4B6, #FF6B6B);
+  }
+
+  /* Gerilim Dolu Kaos Modu Teması */
+  body.chaos-theme {
+    --bg-color: #080101;
+    --card-bg: #120303;
+    --text-main: #ffeded;
+    --text-muted: #8c4a4a;
+    --border-color: #3b0c0c;
+    --tab-bg: #0a0101;
+    --board-bg: #050000;
+    --shadow-color: rgba(255, 0, 0, 0.2);
+    --accent-gradient: linear-gradient(135deg, #ff1a1a, #800000);
+  }
+
+  body.chaos-theme .card {
+    border: 1px solid var(--border-color);
+    animation: chaos-breath 3s infinite alternate ease-in-out;
+  }
+
+  @keyframes chaos-breath {
+    0% { box-shadow: 0 0 30px -10px rgba(255, 0, 0, 0.15); border-color: #2b0808; }
+    100% { box-shadow: 0 0 70px -5px rgba(255, 0, 0, 0.4); border-color: #591010; }
+  }
+
+  body.chaos-theme .title { text-shadow: 0 0 15px rgba(255, 50, 50, 0.4); }
+  body.chaos-theme .eyebrow { color: #ff3333; text-shadow: 0 0 8px rgba(255, 0, 0, 0.5); }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg-color);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 500px;
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 20px 60px -20px var(--shadow-color);
+    transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 520px;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Başlık ve Ekran Yapıları */
+  .header { text-align: center; margin-bottom: 20px; position: relative; }
+  .header .eyebrow { font-size: 13px; letter-spacing: 4px; color: var(--text-muted); font-weight: 700; }
+  .header .title { font-size: 32px; font-weight: 700; color: var(--text-main); letter-spacing: 1px; }
+  
+  .control-btn {
+    position: absolute; top: 10px; background: none; border: none;
+    cursor: pointer; color: var(--text-muted); padding: 6px; border-radius: 8px;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .control-btn:hover { color: var(--text-main); background: var(--tab-bg); }
+  .control-btn.left { left: 0; }
+  .control-btn.right { right: 0; }
+  .control-btn svg { width: 18px; height: 18px; }
+
+  /* Ana Sayfa Tasarımı (Home Screen) */
+  .home-container {
+    text-align: center;
+    padding: 30px 0 20px 0;
+    animation: ape-pop 0.3s ease-out;
+  }
+  .logo-area { margin-bottom: 30px; }
+  .main-title {
+    font-size: 42px; font-weight: 700; color: var(--text-main);
+    line-height: 1.1; letter-spacing: -1px; margin: 0;
+  }
+  .gradient-text {
+    background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .main-play-btn {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, background-color 0.2s;
+  }
+  .main-play-btn:hover, .main-play-btn:active { transform: scale(1.05); }
+
+  .menu-main-row { display: flex; align-items: stretch; justify-content: center; gap: 12px; margin: 25px 0 15px 0; }
+  .menu-sub-btn {
+    flex: 1; font-size: 13px; padding: 14px 8px; border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .menu-center-wrap { flex: 1.4; display: flex; flex-direction: column; }
+
+  #primaryPlayBtn {
+    width: 100%; background: var(--text-main); color: var(--card-bg); border: none;
+    border-radius: 16px; padding: 16px; font-size: 19px; box-shadow: 0 8px 24px -6px var(--shadow-color);
+  }
+  #primaryPlayBtn:hover { box-shadow: 0 12px 28px -6px var(--shadow-color); }
+
+  #serbestPlayBtn { background: rgba(46, 196, 182, 0.08); color: #2EC4B6; border: 2px solid #2EC4B6; box-shadow: 0 4px 14px rgba(46, 196, 182, 0.1); }
+  body.dark-theme #serbestPlayBtn { background: rgba(46, 196, 182, 0.14); }
+
+  #collectionBtn { background: rgba(244, 162, 97, 0.08); color: #F4A261; border: 2px dashed #F4A261; box-shadow: 0 4px 14px rgba(244, 162, 97, 0.1); }
+  body.dark-theme #collectionBtn { background: rgba(244, 162, 97, 0.14); }
+
+  .vip-btn-container { width: 100%; margin-bottom: 25px; position: relative; }
+  .vip-btn {
+    width: 100%; background: linear-gradient(135deg, #FFD700, #F4A261); color: #121214; border: none;
+    border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 700;
+    box-shadow: 0 8px 24px -6px rgba(244, 162, 97, 0.5); display: flex; flex-direction: column;
+    align-items: center; gap: 4px; letter-spacing: 0.5px;
+  }
+  .vip-btn.locked { background: var(--board-bg); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+  .vip-btn.locked:hover { transform: scale(1); }
+
+  /* 🛠️ YENİ: Bilgi Butonu Tasarımı (!) */
+  .info-btn {
+    position: absolute; top: -8px; right: -8px; width: 24px; height: 24px;
+    background: #F4A261; color: #fff; border: 2px solid var(--card-bg); border-radius: 50%;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 2; transition: transform 0.2s;
+  }
+  .info-btn:hover { transform: scale(1.15); }
+
+  .btn-subtext {
+    display: block; font-size: 10px; font-weight: 500; opacity: 0.85; margin-top: 5px;
+    letter-spacing: 0.5px; text-transform: uppercase; font-family: 'Space Grotesk', sans-serif;
+  }
+  #primaryPlayBtn .btn-subtext { color: rgba(255, 255, 255, 0.75); }
+  body.dark-theme #primaryPlayBtn .btn-subtext { color: rgba(0, 0, 0, 0.6); }
+
+  /* Alt Navigasyon Barı */
+  .bottom-nav {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
+    padding-top: 16px; border-top: 1px solid var(--border-color);
+  }
+  .nav-btn {
+    flex: 1; background: none; border: none; font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 6px; transition: all 0.2s;
+  }
+  .nav-btn svg { width: 20px; height: 20px; stroke: currentColor; }
+  .nav-btn:hover, .nav-btn.active { color: var(--text-main); }
+
+  /* Ayarlar Ekranı Tasarımı */
+  .settings-list { display: flex; flex-direction: column; gap: 14px; margin: 20px 0; animation: ape-pop 0.2s ease-out; }
+  .settings-row {
+    display: flex; justify-content: space-between; align-items: center; background: var(--tab-bg);
+    padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);
+  }
+  .settings-label { font-weight: 700; font-size: 15px; color: var(--text-main); }
+  .toggle-control-btn {
+    border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-main);
+    padding: 6px 16px; border-radius: 10px; font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: 13px; cursor: pointer; transition: all 0.2s; min-width: 90px; text-align: center;
+  }
+  .toggle-control-btn.active { background: var(--text-main); color: var(--card-bg); border-color: var(--text-main); }
+  .danger-action-btn {
+    background: #FF6B6B; color: #fff; border: none; padding: 14px; border-radius: 14px;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer;
+    width: 100%; margin-top: 10px; transition: opacity 0.2s;
+  }
+  .danger-action-btn:hover { opacity: 0.9; }
+
+  /* Zorluk Seçim Sekmeleri */
+  .difficulty-tabs {
+    display: flex; gap: 6px; justify-content: center; margin: 16px 0 8px 0; background: var(--tab-bg);
+    padding: 4px; border-radius: 14px; border: 1px solid var(--border-color);
+  }
+  .tab-btn {
+    flex: 1; border: none; background: none; border-radius: 10px; padding: 8px 12px;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer;
+    transition: all 0.2s; color: var(--text-muted); text-align: center;
+  }
+  .tab-btn.active[data-mode="normal"] { background: #2D3142; color: #fff; }
+  .tab-btn.active[data-mode="zor"] { background: #F4A261; color: #fff; }
+  .tab-btn.active[data-mode="kabus"] { background: #FF6B6B; color: #fff; }
+  .tab-btn.active[data-mode="chaos"] { background: linear-gradient(135deg, #FFD700, #F4A261); color: #121214; }
+
+  /* Menü Seviye Seçimi */
+  .campaign-container { animation: ape-pop 0.2s ease-out; width: 100%; }
+  .level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+  .level-btn {
+    aspect-ratio: 1 / 1; border-radius: 14px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; cursor: pointer; transition: all 0.2s;
+    position: relative; border: 2px solid var(--border-color); padding-top: 6px;
+  }
+  .level-btn .num { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; }
+  .level-btn .mini-stars { display: flex; gap: 1px; justify-content: center; }
+  .level-btn .mini-stars svg { width: 10px; height: 10px; }
+  
+  .level-btn.locked { background: var(--bg-color); color: var(--text-muted); cursor: not-allowed; border-color: var(--border-color); }
+  .level-btn.unlocked { background: var(--card-bg); color: var(--text-main); border-color: var(--text-main); }
+  .level-btn.unlocked:hover { background: var(--text-main); color: var(--card-bg); transform: scale(1.05); }
+  .level-btn.unlocked:hover .mini-stars svg { fill: var(--card-bg); stroke: var(--card-bg); }
+  
+  .level-btn.completed { background: rgba(46, 196, 182, 0.15); color: #2EC4B6; border-color: #2EC4B6; }
+  .level-btn.completed:hover { background: #2EC4B6; color: #FFFFFF; transform: scale(1.05); }
+  .level-btn.completed:hover .mini-stars svg { fill: #FFF; stroke: #FFF; }
+  .level-btn svg.lock-icon { width: 14px; height: 14px; color: var(--text-muted); }
+
+  /* Skor Paneli */
+  .stats {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 20px;
+    padding: 10px 6px; background: var(--tab-bg); border-radius: 14px; border: 1px solid var(--border-color);
+    align-items: center; transition: background 0.4s ease, border-color 0.4s ease;
+  }
+  .stat { text-align: center; }
+  .stat-label { font-size: 9px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--text-main); }
+  .stat.high-score .stat-value { color: #2EC4B6; }
+  .live-stars-wrap { display: flex; gap: 1px; justify-content: center; margin-top: 2px; }
+  .live-stars-wrap svg { width: 11px; height: 11px; }
+  .hearts { display: flex; gap: 2px; justify-content: center; }
+  .hearts svg { width: 13px; height: 13px; }
+
+  .board-wrap { position: relative; overflow: hidden; border-radius: 16px; width: 100%; }
+
+  .board {
+    display: grid; background: var(--board-bg); border-radius: 16px; padding: 10px; margin: 0 auto;
+    width: 100%; max-width: min(100%, calc(100vw - 100px)); touch-action: none; transition: background 0.4s ease;
+  }
+
+  .cell {
+    aspect-ratio: 1 / 1; min-width: 0; min-height: 0; overflow: hidden; display: flex;
+    align-items: center; justify-content: center; transition: opacity 0.25s ease, background-color 0.15s, border-color 0.15s;
+    position: relative; touch-action: manipulation;
+  }
+  
+  .cell.filled { cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .cell svg { position: relative; z-index: 2; }
+  .cell.exiting { opacity: 0; }
+
+  .cell.block-wall {
+    background-color: var(--border-color) !important; border-radius: 6px !important;
+    border: none !important; cursor: not-allowed;
+  }
+  body.dark-theme .cell.block-wall { background-color: #222226 !important; }
+  body.chaos-theme .cell.block-wall { background-color: #240606 !important; border: 1px solid #3d0c0c !important; }
+  
+  .cell.block-ice {
+    background-color: rgba(46, 196, 182, 0.2) !important; border: 2px solid rgba(46, 196, 182, 0.5) !important;
+    border-radius: 6px !important; cursor: default;
+  }
+  body.chaos-theme .cell.block-ice { background-color: rgba(255, 30, 30, 0.08) !important; border: 2px solid rgba(255, 30, 30, 0.3) !important; }
+  body.chaos-theme .cell.block-ice svg { stroke: #ff3333; opacity: 0.7; }
+  .cell.block-ice svg { width: 60%; height: 60%; opacity: 0.6; }
+  
+  .cell.block-portal { background-color: transparent !important; border: none !important; border-radius: 50% !important; cursor: default; }
+  .cell.block-portal svg { width: 80%; height: 80%; animation: spin 3s linear infinite; }
+
+  .particle { position: absolute; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; z-index: 99; }
+
+  @keyframes trophy-burst {
+    0% { transform: scale(0) rotate(-720deg); filter: drop-shadow(0 0 0 rgba(244,162,97,0)); }
+    70% { transform: scale(1.3) rotate(20deg); filter: drop-shadow(0 0 30px #F4A261); }
+    100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 15px rgba(244,162,97,0.6)); }
+  }
+  .trophy-animate { display: inline-block; font-size: 64px; line-height: 1; animation: trophy-burst 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+  .overlay-stars { display: flex; gap: 6px; align-items: center; justify-content: center; margin: 6px 0; flex-wrap: wrap; }
+  .overlay-stars svg { width: 32px; height: 32px; }
+
+  .badge-notify {
+    color: #FFF; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    margin: 4px auto; display: block; width: max-content; box-shadow: 0 4px 10px rgba(0,0,0,0.08); text-align: center;
+  }
+
+  @keyframes ape-pop { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .overlay {
+    position: absolute; inset: 0; background: var(--card-bg); border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; text-align: center; padding: 16px; animation: ape-pop 0.2s ease-out; z-index: 10; border: 2px solid var(--border-color);
+  }
+  .overlay.hidden { display: none; }
+  .overlay .big-icon svg { width: 40px; height: 40px; }
+  .overlay .msg { font-size: 20px; font-weight: 700; color: var(--text-main); }
+  .overlay .score-line { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: var(--text-muted); }
+
+  .btn-group { display: flex; gap: 10px; margin-top: 6px; }
+  .btn {
+    border: none; border-radius: 10px; padding: 10px 18px; font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 14px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .btn.win { background: #2D3142; }
+  .btn.lose { background: #FF6B6B; }
+  .btn.neutral { background: var(--text-muted); }
+  .btn svg { width: 16px; height: 16px; }
+
+  .footer { margin-top: 10px; text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  #orientationOverlay {
+    position: fixed; inset: 0; background: var(--bg-color); z-index: 99999;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px; color: var(--text-main);
+  }
+  #orientationOverlay svg { width: 80px; height: 80px; margin-bottom: 24px; animation: rotate-phone 2s infinite ease-in-out; }
+  @keyframes rotate-phone { 0% { transform: rotate(-90deg); } 50% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
+  /* (hover: none) and (pointer: coarse) kuralı bunun sadece cep telefonlarında çalışmasını sağlar */
+  @media screen and (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
+    #orientationOverlay { display: flex !important; }
+    .card { display: none !important; }
+    #appBottomNav { display: none !important; }
+  }
+
+  #tutorialPointer {
+    position: fixed; z-index: 9999; pointer-events: none; transition: all 0.3s ease;
+    animation: pointer-bounce 1s infinite; display: none; filter: drop-shadow(0 8px 12px rgba(244, 162, 97, 0.5));
+  }
+  @keyframes pointer-bounce { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(0.95); } }
+
+  #toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #FF6B6B; color: #fff;
+    padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 13px; z-index: 999999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="orientationOverlay">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+  </svg>
+  <div class="msg" id="orientationMsg" style="font-weight:700; font-size:18px;">Lütfen cihazınızı dikey konuma çevirin.</div>
+</div>
+
+<div id="tutorialPointer">
+  <svg viewBox="0 0 24 24" width="64" height="64" fill="#F4A261" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 10V3a2 2 0 0 1 4 0v7"/>
+    <path d="M13 10v-1a2 2 0 0 1 4 0v2"/>
+    <path d="M17 11.5v-1a2 2 0 0 1 4 0v5.5a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-4a2 2 0 0 1 4 0v2"/>
+  </svg>
+</div>
+
+<div class="card">
+  <div id="homeScreen" class="home-container">
+    <div class="logo-area">
+      <h1 class="main-title">PolyArrows<br><span class="gradient-text">Escape</span></h1>
+    </div>
+    
+    <div class="menu-main-row">
+      <button id="serbestPlayBtn" class="main-play-btn menu-sub-btn">
+        <span>Serbest Mod</span>
+        <span id="serbestBtnSub" class="btn-subtext">Level 1</span>
+      </button>
+      
+      <div class="menu-center-wrap">
+        <button id="primaryPlayBtn" class="main-play-btn">
+          <span id="primaryPlayBtnText">Oyna</span>
+          <span id="campaignLastPlayedInfo" class="btn-subtext"></span>
+        </button>
+      </div>
+      
+      <button id="collectionBtn" class="main-play-btn menu-sub-btn">
+        <span id="collectionIconSpan" style="display:inline-flex;align-items:center;width:20px;height:20px;vertical-align:middle;"></span> <span id="collectionBtnText">Collection</span>
+        <span class="btn-subtext" id="collectionBtnSub" style="opacity: 0.65;">Rewards</span>
+      </button>
+    </div>
+
+    <div class="vip-btn-container">
+      <button id="chaosPlayBtn" class="main-play-btn vip-btn locked">
+        <span>👑 <span id="vipBtnText">CHAOS MODE (VIP)</span></span>
+        <span id="chaosBtnSub" class="btn-subtext" style="color:var(--text-muted);">LOCKED</span>
+      </button>
+      <button id="chaosInfoBtn" class="info-btn">!</button>
+    </div>
+    
+    <div class="footer">Think, tap and free the arrows!<br>Designer Enes Özbek 😶‍🌫️</div>
+  </div>
+
+  <div id="menuScreen" class="campaign-container hidden">
+    <div class="header">
+      <div class="eyebrow">PolyArrows - Escape</div>
+      <div class="title">LEVELS</div>
+    </div>
+    
+    <div class="difficulty-tabs" id="difficultyTabs">
+      <button class="tab-btn active" data-mode="normal">NORMAL</button>
+      <button class="tab-btn" data-mode="zor">HARD</button>
+      <button class="tab-btn" data-mode="kabus">NIGHTMARE</button>
+      <button class="tab-btn" data-mode="chaos" style="display: none;">CHAOS</button>
+    </div>
+
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+
+  <div id="collectionScreen" class="campaign-container hidden">
+    <div class="header">
+      <button class="control-btn left" id="backToHomeFromColl" title="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="eyebrow">REWARDS & ACHIEVEMENTS</div>
+      <div class="title">COLLECTION</div>
+    </div>
+    <div class="settings-list" id="collectionList" style="margin: 20px 0; overflow-y: auto; max-height: 320px; padding-right: 4px;">
+    </div>
+  </div>
+
+  <div id="settingsScreen" class="campaign-container hidden">
+    <div class="header">
+      <div class="eyebrow">GAME CONFIGURATION</div>
+      <div class="title">SETTINGS</div>
+    </div>
+    
+    <div class="settings-list">
+      <div class="settings-row">
+        <span class="settings-label" data-key="music">Music / Sound</span>
+        <button id="toggleMusicBtn" class="toggle-control-btn active">On</button>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label" data-key="vibration">Vibration</span>
+        <button id="toggleVibeBtn" class="toggle-control-btn active">On</button>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label" data-key="appearance">Appearance</span>
+        <button id="toggleThemeBtn" class="toggle-control-btn">Light</button>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label" data-key="language">Language</span>
+        <select id="langSelect" style="border:2px solid var(--border-color);background:var(--card-bg);color:var(--text-main);padding:7px 12px;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;outline:none;transition:all 0.2s;">
+          <option value="en">🇬🇧 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="ja">🇯🇵 日本語</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label" data-key="tutorial">Tutorial</span>
+        <button id="replayTutorialBtn" class="toggle-control-btn">Replay</button>
+      </div>
+      <button id="resetSaveBtn" class="danger-action-btn">Reset Save Data</button>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="hidden">
+    <div class="header">
+      <button class="control-btn left" id="backToMenuBtn" title="Geri">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="eyebrow" id="gameLevelEyebrow">NORMAL - LEVEL 1</div>
+      <div class="title">PUZZLE</div>
+      <button class="control-btn right" id="resetBtn" title="Yeniden Başlat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label" data-key="levelLabel">LEVEL</div>
+        <div class="stat-value" id="levelVal">1</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"></div>
+        <div class="hearts" id="hearts"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label" data-key="score">SCORE</div>
+        <div class="stat-value" id="scoreVal">0</div>
+      </div>
+      <div class="stat high-score">
+        <div class="stat-label" data-key="record">RECORD</div>
+        <div class="stat-value" id="highScoreVal">0</div>
+      </div>
+      <div class="stat" id="timerStat">
+        <div class="stat-label" data-key="time">TIME</div>
+        <div class="stat-value" id="timeVal">00:00</div>
+        <div class="live-stars-wrap" id="liveStars"></div>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+
+      <div class="overlay hidden" id="overlay">
+        <div class="big-icon" id="overlayIcon"></div>
+        <div class="msg" id="overlayMsg"></div>
+        <div class="overlay-stars" id="overlayStars"></div>
+        <div class="score-line" id="overlayScore"></div>
+        <div class="btn-group" id="overlayBtnGroup"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="appBottomNav" class="bottom-nav">
+    <button class="nav-btn" id="navLevelsBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Seviyeler</span>
+    </button>
+    <button class="nav-btn active" id="navHomeBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Ana Menü</span>
+    </button>
+    <button class="nav-btn" id="navSettingsBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Ayarlar</span>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL_LEVELS = 24; 
+
+  const ICONS = {
+    up:     '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="4"/><polyline points="5 11 12 4 19 11"/></svg>',
+    down:   '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="20"/><polyline points="19 13 12 20 5 13"/></svg>',
+    left:   '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="20" y1="12" x2="4" y2="12"/><polyline points="11 19 4 12 11 5"/></svg>',
+    right:  '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><polyline points="13 5 19 12 13 19"/></svg>',
+    heartFilled: '<svg viewBox="0 0 24 24" fill="#FF6B6B" stroke="#FF6B6B" stroke-width="2"><path d="M12 21s-7.5-4.5-9.5-9C1 8.5 3 5 6.5 5c2 0 3.5 1.5 5.5 4 2-2.5 3.5-4 5.5-4C21 5 23 8.5 21.5 12 19.5 16.5 12 21 12 21z"/></svg>',
+    heartEmpty: '<svg viewBox="0 0 24 24" fill="none" stroke="#DADAD6" stroke-width="2"><path d="M12 21s-7.5-4.5-9.5-9C1 8.5 3 5 6.5 5c2 0 3.5 1.5 5.5 4 2-2.5 3.5-4 5.5-4C21 5 23 8.5 21.5 12 19.5 16.5 12 21 12 21z"/></svg>',
+    starFilled: '<svg viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    starEmpty: '<svg viewBox="0 0 24 24" fill="none" stroke="#DADAD6" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+    trophyGold: '<svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+    trophyLocked: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.25"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+    skull: '<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="M12.5 17 l-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></svg>',
+    lockIcon: '<svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    checkpointIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
+    badgeIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>',
+    collectionIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+    rotate: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
+    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+    
+    wallBlock: '<svg viewBox="0 0 24 24" fill="rgba(0,0,0,0.15)"><rect width="24" height="24" rx="4"/><path stroke="rgba(0,0,0,0.3)" stroke-width="2" d="M0 8h24 M0 16h24 M8 0v8 M16 8v8 M8 16v8"/></svg>',
+    iceBlock: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"/></svg>',
+    portalBlock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 8 8 0 1 1-8-8 6 6 0 1 0 6 6 4 4 0 1 1-4-4 2 2 0 1 0 2 2"/></svg>'
+  };
+
+  const DIRS = {
+    up:     { dx: 0, dy: -1 },
+    down:   { dx: 0, dy: 1 },
+    left:   { dx: -1, dy: 0 },
+    right:  { dx: 1, dy: 0 },
+  };
+  const DIR_KEYS = Object.keys(DIRS);
+
+  const Storage = {
+    get: (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch(e) { return fallback; } },
+    set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} }
+  };
+
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function getShapeWorldCells(x, y, dir, localShape) {
+    const { dx, dy } = DIRS[dir];
+    const px = -dy; const py = dx;  
+    return localShape.map(([f, p]) => ({ x: x + f * dx + p * px, y: y + f * dy + p * py }));
+  }
+
+  function generateShapeCoordinates(type, len) {
+    if (type === 'I' || len < 3) return Array.from({length: len}, (_, i) => [-i, 0]);
+    if (type === 'L') {
+      const straight = Math.ceil(len / 2); const turn = len - straight;
+      const cells = Array.from({length: straight}, (_, i) => [-i, 0]);
+      for (let i = 1; i <= turn; i++) cells.push([-(straight - 1), i]);
+      return cells;
+    }
+    if (type === 'U') {
+      const cells = []; const straight_len = Math.ceil((len - 1) / 2);
+      for (let i = 0; i < straight_len; i++) cells.push([-i, 0]);
+      const turn_f = -(straight_len - 1); cells.push([turn_f, 1]);
+      let current_f = turn_f + 1;
+      while (cells.length < len) { cells.push([current_f, 1]); current_f++; }
+      return cells;
+    }
+    return Array.from({length: len}, (_, i) => [-i, 0]);
+  }
+
+  function triggerVibe(pattern) {
+    if (!settings.vibe) return;
+    if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
+      try { window.navigator.vibrate(pattern); } catch (e) {}
+    }
+  }
+
+  function triggerScreenShake() {
+    boardEl.animate([
+      { transform: 'translate(0, 0)' }, { transform: 'translate(-4px, 2px) rotate(-1deg)' },
+      { transform: 'translate(3px, -1px) rotate(1deg)' }, { transform: 'translate(-3px, -2px) rotate(0deg)' },
+      { transform: 'translate(4px, 2px) rotate(1deg)' }, { transform: 'translate(-2px, 1px) rotate(-1deg)' },
+      { transform: 'translate(2px, -1px) rotate(0deg)' }, { transform: 'translate(0, 0)' }
+    ], { duration: 250, easing: 'linear' });
+  }
+
+  function createBurstParticles(element, hue) {
+    const wrap = document.querySelector('.board-wrap');
+    if (!wrap) return;
+    const elRect = element.getBoundingClientRect(); const wrapRect = wrap.getBoundingClientRect();
+    const centerX = elRect.left - wrapRect.left + elRect.width / 2;
+    const centerY = elRect.top - wrapRect.top + elRect.height / 2;
+    
+    for (let i = 0; i < 8; i++) {
+      const p = document.createElement('div'); p.className = 'particle';
+      p.style.backgroundColor = `hsl(${hue}, 95%, 60%)`;
+      p.style.left = centerX + 'px'; p.style.top = centerY + 'px';
+      wrap.appendChild(p);
+      
+      const angle = Math.random() * Math.PI * 2; const distance = 35 + Math.random() * 55; 
+      const tx = Math.cos(angle) * distance; const ty = Math.sin(angle) * distance;
+      
+      p.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+      ], { duration: 400 + Math.random() * 300, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)', fill: 'forwards' }).onfinish = () => p.remove();
+    }
+  }
+
+  function createCollectionHoverParticles(btn) {
+    const rect = btn.getBoundingClientRect();
+    const wrap = document.querySelector('.card'); 
+    const wrapRect = wrap.getBoundingClientRect();
+
+    const count = 7;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      
+      const goldHues = [44, 48, 38, 52];
+      const randomHue = goldHues[Math.floor(Math.random() * goldHues.length)];
+      p.style.backgroundColor = `hsl(${randomHue}, 98%, 55%)`;
+      p.style.width = '5px';
+      p.style.height = '5px';
+
+      const edgeX = rect.left - wrapRect.left + Math.random() * rect.width;
+      const edgeY = rect.top - wrapRect.top + Math.random() * rect.height;
+      
+      p.style.left = edgeX + 'px';
+      p.style.top = edgeY + 'px';
+      wrap.appendChild(p);
+
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 20 + Math.random() * 35;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+
+      p.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+      ], {
+        duration: 500 + Math.random() * 300, easing: 'ease-out', fill: 'forwards'
+      }).onfinish = () => p.remove();
+    }
+  }
+
+  let audioCtx = null;
+  function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+  // 🛠️ YENİ: iOS (Apple) ses sorununu çözen uyanma (resume) kodu buraya eklendi
+  function playSound(type) {
+    if (!settings.music) return; 
+    try {
+      initAudio(); if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+
+      if (type === 'success') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(450, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+        gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0, now + 0.12);
+        osc.start(now); osc.stop(now + 0.12);
+      } else if (type === 'error') {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(140, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.25);
+        osc.start(now); osc.stop(now + 0.25);
+      } else if (type === 'win') {
+        osc.type = 'triangle';
+        [350, 450, 550, 700].forEach((freq, i) => osc.frequency.setValueAtTime(freq, now + i * 0.07));
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.35);
+        osc.start(now); osc.stop(now + 0.35);
+      } else if (type === 'ice') { 
+        osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.15);
+        osc.start(now); osc.stop(now + 0.15);
+      } else if (type === 'lose') {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(40, now + 0.6);
+        gain.gain.setValueAtTime(0.25, now); gain.gain.linearRampToValueAtTime(0, now + 0.6);
+        osc.start(now); osc.stop(now + 0.6);
+      }
+    } catch(e) {}
+  }
+
+  function getEscapeResult(testGrid, id) {
+    let pieceCells = [];
+    let head = null;
+    for (let y = 0; y < testGrid.length; y++) {
+      for (let x = 0; x < testGrid.length; x++) {
+        if (testGrid[y][x] && testGrid[y][x].id === id) {
+          pieceCells.push({ x, y, idx: testGrid[y][x].idx });
+          if (testGrid[y][x].isHead) head = { x, y, dir: testGrid[y][x].dir };
+        }
+      }
+    }
+    if (!head) return { status: 'error' };
+
+    pieceCells.sort((a, b) => a.idx - b.idx);
+    const { dx, dy } = DIRS[head.dir];
+    let cx = head.x + dx; let cy = head.y + dy;
+    let path = [];
+    let visitedPortals = new Set();
+    let size = testGrid.length;
+    let freeSteps = 0;
+
+    while (cx >= 0 && cx < size && cy >= 0 && cy < size) {
+      path.push({ x: cx, y: cy });
+      let cell = testGrid[cy][cx];
+      if (cell) {
+        if (cell.type === 'wall') return { status: 'blocked', cell: { x: cx, y: cy }, path, freeSteps };
+        if (cell.type === 'ice') return { status: 'ice', cell: { x: cx, y: cy }, path, freeSteps };
+        if (cell.type === 'portal') {
+          let portalKey = cx + ',' + cy;
+          if (visitedPortals.has(portalKey)) return { status: 'blocked', cell: { x: cx, y: cy }, path, freeSteps }; 
+          visitedPortals.add(portalKey);
+          cx = cell.link.x; cy = cell.link.y;
+          path.push({ x: cx, y: cy, isPortalJump: true });
+          cx += dx; cy += dy;
+          freeSteps++;
+          continue;
+        }
+        if (cell.id && cell.id !== id) return { status: 'blocked', cell: { x: cx, y: cy }, path, freeSteps };
+      }
+      freeSteps++;
+      cx += dx; cy += dy;
+    }
+    return { status: 'clear', path, freeSteps };
+  }
+
+  function isPieceRemovable(grid, id) {
+    return getEscapeResult(grid, id).status === 'clear';
+  }
+
+  function isGridSolvable(testGrid) {
+    let tempGrid = testGrid.map(row => row.map(c => c ? {...c} : null));
+    let progress = true;
+    const n = tempGrid.length;
+
+    while (progress) {
+      progress = false;
+      let remainingIds = new Set();
+      for (let y = 0; y < n; y++) {
+        for (let x = 0; x < n; x++) {
+          if (tempGrid[y][x] && tempGrid[y][x].id) remainingIds.add(tempGrid[y][x].id);
+        }
+      }
+      if (remainingIds.size === 0) return true;
+
+      for (let id of remainingIds) {
+        let res = getEscapeResult(tempGrid, id);
+        if (res.status === 'clear') {
+          for (let y = 0; y < n; y++) {
+            for (let x = 0; x < n; x++) {
+              if (tempGrid[y][x] && tempGrid[y][x].id === id) tempGrid[y][x] = null;
+            }
+          }
+          progress = true; break;
+        } else if (res.status === 'ice') {
+          tempGrid[res.cell.y][res.cell.x] = null;
+          progress = true; break;
+        }
+      }
+    }
+    return false;
+  }
+
+  async function generateLevel(levelNum, mode = 'normal') {
+    let gridSize = 4;
+    let maxLen = 1;
+    let arrowCount = 4;
+
+    let modeOffset = mode === 'normal' ? 0 : (mode === 'zor' ? 50000 : (mode === 'kabus' ? 100000 : 200000));
+    let serbestSeedModifier = (gameMode === 'serbest') ? parseInt(Storage.get('arrows_serbest_seed_mod', 0)) : 0;
+    const rng = mulberry32(levelNum * 9973 + 12345 + modeOffset + serbestSeedModifier);
+
+    if (mode === 'chaos') {
+      gridSize = Math.min(6 + Math.floor((levelNum - 1) / 1.5), 24); 
+      maxLen = (levelNum <= 15) ? 3 : 4; 
+      arrowCount = Math.floor(gridSize * gridSize * 0.45); 
+    } else if (mode === 'normal') {
+      gridSize = Math.min(4 + Math.floor((levelNum - 1) / 1.5), 7);
+      maxLen = Math.min(gridSize, 3);
+      arrowCount = Math.min(Math.floor(gridSize * gridSize * 0.70), 5 + Math.floor(levelNum * 2.5));
+    } else if (mode === 'zor') {
+      gridSize = Math.min(5 + Math.floor((levelNum - 1) / 2.5), 14); 
+      maxLen = Math.min(gridSize, 4);
+      arrowCount = Math.min(Math.floor(gridSize * gridSize * 0.65), 10 + Math.floor(levelNum * 3)); 
+    } else { // kabus
+      gridSize = Math.min(6 + Math.floor((levelNum - 1) / 1.5), 21); 
+      maxLen = Math.min(gridSize, 5);
+      arrowCount = Math.min(Math.floor(gridSize * gridSize * 0.60), 15 + Math.floor(levelNum * 3.5)); 
+    }
+
+    const BATCH = 25; 
+    let currentArrowCount = arrowCount;
+    let currentMaxLen = maxLen;
+
+    for (let layoutAttempt = 0; layoutAttempt < 400; layoutAttempt++) {
+      if (layoutAttempt > 0 && layoutAttempt % BATCH === 0) { await new Promise(r => setTimeout(r, 0)); }
+
+      if (layoutAttempt === 100) { currentArrowCount = Math.floor(arrowCount * 0.85); }
+      if (layoutAttempt === 200) { currentArrowCount = Math.floor(arrowCount * 0.75); currentMaxLen = Math.max(1, maxLen - 1); }
+      if (layoutAttempt === 300) { currentArrowCount = Math.floor(arrowCount * 0.60); currentMaxLen = Math.max(1, maxLen - 2); }
+
+      const grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+      let placedPieces = [];
+      let currentId = 1;
+      let placedCount = 0;
+
+      for (let p = 0; p < currentArrowCount * 4 && placedCount < currentArrowCount; p++) {
+        const x = Math.floor(rng() * gridSize);
+        const y = Math.floor(rng() * gridSize);
+        let chosenLen = 1;
+        
+        if (currentMaxLen > 1) {
+          const weights = [];
+          for (let l = 1; l <= currentMaxLen; l++) {
+            if (mode === 'normal' || (mode === 'chaos' && levelNum <= 10)) weights.push(Math.pow(0.6, l - 1) * 100);
+            else if (mode === 'zor' || (mode === 'chaos' && levelNum <= 16)) weights.push(Math.max(5, 100 - Math.abs(l - Math.floor(currentMaxLen/2)) * 12));
+            else weights.push(Math.pow(1.25, l) * 5); 
+          }
+          const totalWeight = weights.reduce((a, b) => a + b, 0);
+          let sample = rng() * totalWeight;
+          for (let l = 1; l <= currentMaxLen; l++) {
+            sample -= weights[l - 1];
+            if (sample <= 0) { chosenLen = l; break; }
+          }
+        }
+
+        const types = ['I', 'L', 'U'];
+        const type = types[Math.floor(rng() * types.length)];
+        const localShape = generateShapeCoordinates(type, chosenLen);
+
+        const randomRefDir = DIR_KEYS[Math.floor(rng() * DIR_KEYS.length)];
+        const worldCells = getShapeWorldCells(x, y, randomRefDir, localShape);
+
+        let fits = true;
+        for (const cell of worldCells) {
+          if (cell.x < 0 || cell.x >= gridSize || cell.y < 0 || cell.y >= gridSize || grid[cell.y][cell.x] !== null) {
+            fits = false; break;
+          }
+        }
+        if (!fits) continue;
+
+        worldCells.forEach((cell, idx) => {
+          grid[cell.y][cell.x] = { id: currentId, isHead: idx === 0, idx: idx, length: localShape.length, dir: 'up' };
+        });
+        placedPieces.push({ id: currentId, cells: worldCells });
+        currentId++; placedCount++;
+      }
+
+      if (placedCount < Math.min(currentArrowCount, 2)) continue;
+
+      for (let dirAttempt = 0; dirAttempt < 80; dirAttempt++) {
+        placedPieces.forEach(piece => {
+          let invalidDir = null;
+          if (piece.cells.length > 1) {
+            let dx = piece.cells[1].x - piece.cells[0].x;
+            let dy = piece.cells[1].y - piece.cells[0].y;
+            for (let key of DIR_KEYS) {
+              if (DIRS[key].dx === dx && DIRS[key].dy === dy) {
+                invalidDir = key; break;
+              }
+            }
+          }
+          
+          let possibleDirs = DIR_KEYS;
+          if (invalidDir) {
+              if (mode === 'chaos') {
+                  if (rng() > 0.10) possibleDirs = DIR_KEYS.filter(d => d !== invalidDir); 
+              } else {
+                  possibleDirs = DIR_KEYS.filter(d => d !== invalidDir);
+              }
+          }
+          
+          const assignedDir = possibleDirs[Math.floor(rng() * possibleDirs.length)];
+          piece.cells.forEach(cell => { grid[cell.y][cell.x].dir = assignedDir; });
+        });
+
+        if (isGridSolvable(grid)) {
+           if (mode === 'chaos') {
+             let testGrid = grid.map(row => row.map(c => c ? {...c} : null));
+             let empties = [];
+             for (let y = 0; y < gridSize; y++) for (let x = 0; x < gridSize; x++) if (!testGrid[y][x]) empties.push({ x, y });
+             empties.sort(() => rng() - 0.5);
+
+             if (levelNum >= 17) {
+               let portalPairs = Math.min(3, 1 + Math.floor((levelNum - 17) / 4));
+               for(let i=0; i<portalPairs; i++) {
+                  if(empties.length >= 2) {
+                    let p1 = empties.pop(); let p2 = empties.pop();
+                    let c1 = i===0 ? '#9D4EDD' : (i===1 ? '#E63946' : '#2A9D8F');
+                    let c2 = i===0 ? '#F4A261' : (i===1 ? '#A8DADC' : '#E9C46A');
+                    testGrid[p1.y][p1.x] = { type: 'portal', color: c1, link: { x: p2.x, y: p2.y } };
+                    testGrid[p2.y][p2.x] = { type: 'portal', color: c2, link: { x: p1.x, y: p1.y } };
+                    if (!isGridSolvable(testGrid)) {
+                        testGrid[p1.y][p1.x] = null; testGrid[p2.y][p2.x] = null;
+                        empties.push(p1, p2); 
+                    }
+                  }
+               }
+             }
+
+             if (levelNum >= 11) {
+               let iceCount = Math.min(Math.floor(gridSize * gridSize * 0.15), Math.floor(levelNum / 1.5));
+               let added = 0;
+               for (let i = 0; i < empties.length && added < iceCount; i++) {
+                 let c = empties[i];
+                 if (testGrid[c.y][c.x]) continue;
+                 testGrid[c.y][c.x] = { type: 'ice' };
+                 if (isGridSolvable(testGrid)) { added++; }
+                 else { testGrid[c.y][c.x] = null; } 
+               }
+             }
+
+             let wallCount = Math.min(Math.floor(gridSize * gridSize * 0.15), Math.floor(levelNum / 1.2));
+             let addedW = 0;
+             for (let i = 0; i < empties.length && addedW < wallCount; i++) {
+               let c = empties[i];
+               if (testGrid[c.y][c.x]) continue;
+               testGrid[c.y][c.x] = { type: 'wall' };
+               if (isGridSolvable(testGrid)) { addedW++; }
+               else { testGrid[c.y][c.x] = null; } 
+             }
+
+             for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (!grid[y][x] && testGrid[y][x]) grid[y][x] = {...testGrid[y][x]};
+                }
+             }
+           }
+           return grid;
+        }
+      }
+    }
+
+    let fbSize = Math.min(gridSize, 10);
+    const fallbackGrid = Array.from({ length: fbSize }, () => Array(fbSize).fill(null));
+    let fId = 1;
+    for(let y = 0; y < fbSize; y++) {
+        for(let x = 0; x < fbSize; x++) {
+            let dir = 'up';
+            if (x < y && x < fbSize - y) dir = 'left';
+            else if (x > y && x >= fbSize - y) dir = 'right';
+            else if (y >= fbSize / 2) dir = 'down';
+            fallbackGrid[y][x] = { id: fId++, isHead: true, idx: 0, dir: dir, length: 1 };
+        }
+    }
+    return fallbackGrid;
+  }
+
+  const TRANSLATIONS = {
+    en: {
+      playBtn: 'Play', continueBtn: 'Continue', freeMode: 'FREE MODE',
+      campaignSub: (d, l) => `${d} - Level ${l}`, freeSub: l => `Level ${l}`,
+      footer: 'Think, tap and free the arrows!',
+      collection: 'Collection', rewards: 'Rewards',
+      levels: 'LEVELS', normal: 'NORMAL', hard: 'HARD', nightmare: 'NIGHTMARE', chaos: 'CHAOS',
+      settings: 'SETTINGS', gameConfig: 'GAME CONFIGURATION',
+      music: 'Music / Sound', vibration: 'Vibration', appearance: 'Appearance', light: 'Light', dark: 'Dark',
+      language: 'Language', resetData: 'Reset Save Data', tutorial: 'Tutorial', replay: 'Replay',
+      resetConfirm: 'All level progress, stars, records and trophies will be deleted! Are you sure?',
+      on: 'On', off: 'Off', levelLabel: 'LEVEL', score: 'SCORE', record: 'RECORD', time: 'TIME',
+      generating: 'Generating level…',
+      congrats: 'Congratulations!', levelCleared: l => `Level ${l} Cleared!`,
+      gameOver: 'Game Over', yourScore: 'Score: ', nextLevel: 'Next Level', mainMenu: 'Main Menu', retry: 'Retry',
+      totalScore: 'Total Score: ', levelPassed: l => `Level ${l} Passed!`,
+      checkpointSaved: l => `Checkpoint saved! You'll continue from Level ${l}.`,
+      trophyAdded: name => `${name} added to Collection!`,
+      unlockAt: l => `Reach Level ${l} to unlock`, earned: l => `Earned — Level ${l}`,
+      resetLevel: 'Level will be reset. Are you sure?',
+      navLevels: 'Levels', navHome: 'Home', navSettings: 'Settings',
+      collectionTitle: 'COLLECTION', rewardsAch: 'REWARDS & ACHIEVEMENTS', backToHome: 'Back',
+      rotateDevice: 'Please rotate your device to Portrait mode.',
+      vipBtnText: 'CHAOS MODE (VIP)', 
+      vipLockedMsg: 'Unlock by reaching Level 11 in Normal, Hard, Nightmare!',
+      tr_name_10: 'Deca-Escape Trophy', tr_desc_10: 'The first badge of elite geometry for reaching Level 10 in Free Mode.',
+      tr_name_30: 'Vectorial Master Trophy', tr_desc_30: 'Strategy master award for flawlessly managing arrow directions by reaching Level 30.',
+      tr_name_50: 'Polyomino Grandmaster Trophy', tr_desc_50: 'Exclusive to those who become the absolute ruler of labyrinth geometry by reaching Level 50.',
+      tr_name_70: 'Infinite Loop Breaker Trophy', tr_desc_70: 'Superior intelligence award for breaking complex loops by reaching Level 70.',
+      tr_name_100: 'Absolute Geometry Legend Trophy', tr_desc_100: 'The legendary Enes Achievement Award for making history by reaching Level 100!'
+    },
+    tr: {
+      playBtn: 'Oyna', continueBtn: 'Devam Et', freeMode: 'SERBEST MOD',
+      campaignSub: (d, l) => `${d} - Seviye ${l}`, freeSub: l => `Seviye ${l}`,
+      footer: 'Düşün, dokun ve okları serbest bırak!',
+      collection: 'Koleksiyon', rewards: 'Ödüller',
+      levels: 'SEVİYELER', normal: 'NORMAL', hard: 'ZOR', nightmare: 'KABUS', chaos: 'KAOS',
+      settings: 'AYARLAR', gameConfig: 'OYUN AYARLARI',
+      music: 'Müzik / Sesler', vibration: 'Titreşim', appearance: 'Görünüm', light: 'Aydınlık', dark: 'Karanlık',
+      language: 'Dil', resetData: 'Kayıt Verilerini Sıfırla', tutorial: 'Öğretici', replay: 'Tekrarla',
+      resetConfirm: 'Tüm seviye kilitleri, yıldızlar, rekorlar ve tüm kupalarınız silinecek! Emin misiniz?',
+      on: 'Açık', off: 'Kapalı', levelLabel: 'SEVİYE', score: 'SKOR', record: 'REKOR', time: 'SÜRE',
+      generating: 'Seviye oluşturuluyor…',
+      congrats: 'Tebrikler!', levelCleared: l => `Seviye ${l} Tamamlandı!`,
+      gameOver: 'Oyun Bitti', yourScore: 'Skorunuz: ', nextLevel: 'Sonraki Seviye', mainMenu: 'Ana Menü', retry: 'Tekrar Dene',
+      totalScore: 'Toplam Skor: ', levelPassed: l => `Seviye ${l} Başarıyla Geçildi!`,
+      checkpointSaved: l => `Checkpoint kaydedildi! Seviye ${l}'den devam edersin.`,
+      trophyAdded: name => `${name} Koleksiyona Eklendi!`,
+      unlockAt: l => `Seviye ${l}'e ulaşarak kilidi aç`, earned: l => `Kazanıldı — Seviye ${l}`,
+      resetLevel: 'Bu seviye sıfırlanacak. Emin misiniz?',
+      navLevels: 'Seviyeler', navHome: 'Ana Menü', navSettings: 'Ayarlar',
+      collectionTitle: 'KOLEKSİYON', rewardsAch: 'BAŞARILAR & ÖDÜLLER', backToHome: 'Geri',
+      rotateDevice: 'Lütfen cihazınızı dikey konuma çevirin.',
+      vipBtnText: 'KAOS MODU (VIP)', 
+      vipLockedMsg: 'Normal, Zor ve Kabus\'ta 11. seviyeye ulaşarak kilidi aç!',
+      tr_name_10: 'Deca-Escape Kupası', tr_desc_10: 'Serbest modda 10. seviyeye ulaşan elit geometrinin ilk nişanı.',
+      tr_name_30: 'Vektörel Üstad Kupası', tr_desc_30: '30. seviyeye ulaşarak okların yönünü kusursuz yöneten strateji üstadı ödülü.',
+      tr_name_50: 'Polyomino Grandmaster Kupası', tr_desc_50: '50. seviyeye ulaşarak labirent geometrisinin mutlak hakimi olanlara özel.',
+      tr_name_70: 'Sonsuz Döngü Kırıcı Kupası', tr_desc_70: '70. seviyeye ulaşarak karmaşık döngüleri kıran üstün zeka ödülü.',
+      tr_name_100: 'Mutlak Geometri Efsanesi Kupası', tr_desc_100: '100. seviyeye ulaşarak tarihe geçen efsanevi Enes Başarı Ödülü!'
+    },
+    de: {
+      playBtn: 'Spielen', continueBtn: 'Fortfahren', freeMode: 'FREIER MODUS',
+      campaignSub: (d, l) => `${d} - Level ${l}`, freeSub: l => `Level ${l}`,
+      footer: 'Denk nach, tippe und befreie die Pfeile!',
+      collection: 'Sammlung', rewards: 'Belohnungen',
+      levels: 'LEVELS', normal: 'NORMAL', hard: 'SCHWER', nightmare: 'ALBTRAUM', chaos: 'CHAOS',
+      settings: 'EINSTELLUNGEN', gameConfig: 'SPIELKONFIGURATION',
+      music: 'Musik / Sound', vibration: 'Vibration', appearance: 'Aussehen', light: 'Hell', dark: 'Dunkel',
+      language: 'Sprache', resetData: 'Speicherdaten zurücksetzen', tutorial: 'Tutorial', replay: 'Wiederholen',
+      resetConfirm: 'Alle Fortschritte, Sterne, Rekorde und Trophäen werden gelöscht! Sicher?',
+      on: 'An', off: 'Aus', levelLabel: 'LEVEL', score: 'PUNKTE', record: 'REKORD', time: 'ZEIT',
+      generating: 'Level wird generiert…',
+      congrats: 'Glückwunsch!', levelCleared: l => `Level ${l} abgeschlossen!`,
+      gameOver: 'Spiel vorbei', yourScore: 'Punkte: ', nextLevel: 'Nächstes Level', mainMenu: 'Hauptmenü', retry: 'Nochmal',
+      totalScore: 'Gesamtpunkte: ', levelPassed: l => `Level ${l} bestanden!`,
+      checkpointSaved: l => `Checkpoint gespeichert! Weiter ab Level ${l}.`,
+      trophyAdded: name => `${name} zur Sammlung hinzugefügt!`,
+      unlockAt: l => `Erreiche Level ${l} zum Freischalten`, earned: l => `Verdient — Level ${l}`,
+      resetLevel: 'Level wird zurückgesetzt. Sicher?',
+      navLevels: 'Levels', navHome: 'Startseite', navSettings: 'Einstellungen',
+      collectionTitle: 'SAMMLUNG', rewardsAch: 'BELOHNUNGEN & ERFOLGE', backToHome: 'Zurück',
+      rotateDevice: 'Bitte drehen Sie Ihr Gerät ins Hochformat.',
+      vipBtnText: 'CHAOS MODUS (VIP)', 
+      vipLockedMsg: 'Erreiche Level 11 in Normal, Schwer & Albtraum, um freizuschalten!',
+      tr_name_10: 'Deca-Escape Trophäe', tr_desc_10: 'Das erste Abzeichen der Elite-Geometrie für das Erreichen von Level 10 im freien Modus.',
+      tr_name_30: 'Vektorieller Meister Trophäe', tr_desc_30: 'Strategiemeister-Auszeichnung für die fehlerfreie Verwaltung von Pfeilrichtungen durch Erreichen von Level 30.',
+      tr_name_50: 'Polyomino Großmeister Trophäe', tr_desc_50: 'Exklusiv für diejenigen, die durch Erreichen von Level 50 zum absoluten Herrscher der Labyrinthgeometrie werden.',
+      tr_name_70: 'Unendlicher Schleifenbrecher Trophäe', tr_desc_70: 'Auszeichnung für überlegene Intelligenz zum Brechen komplexer Schleifen durch Erreichen von Level 70.',
+      tr_name_100: 'Absolute Geometrie Legende Trophäe', tr_desc_100: 'Der legendäre Enes-Leistungs-Preis, um Geschichte zu schreiben, indem Level 100 erreicht wird!'
+    },
+    fr: {
+      playBtn: 'Jouer', continueBtn: 'Continuer', freeMode: 'MODE LIBRE',
+      campaignSub: (d, l) => `${d} - Niveau ${l}`, freeSub: l => `Niveau ${l}`,
+      footer: 'Réfléchis, touche et libère les flèches !',
+      collection: 'Collection', rewards: 'Récompenses',
+      levels: 'NIVEAUX', normal: 'NORMAL', hard: 'DIFFICILE', nightmare: 'CAUCHEMAR', chaos: 'CHAOS',
+      settings: 'PARAMÈTRES', gameConfig: 'CONFIGURATION DU JEU',
+      music: 'Musique / Son', vibration: 'Vibration', appearance: 'Apparence', light: 'Clair', dark: 'Sombre',
+      language: 'Langue', resetData: 'Réinitialiser les données', tutorial: 'Tutoriel', replay: 'Rejouer',
+      resetConfirm: 'Toute la progression, étoiles, records et trophées seront supprimés ! Sûr ?',
+      on: 'Activé', off: 'Désactivé', levelLabel: 'NIVEAU', score: 'SCORE', record: 'RECORD', time: 'TEMPS',
+      generating: 'Génération du niveau…',
+      congrats: 'Félicitations !', levelCleared: l => `Niveau ${l} terminé !`,
+      gameOver: 'Jeu terminé', yourScore: 'Score : ', nextLevel: 'Niveau suivant', mainMenu: 'Menu principal', retry: 'Réessayer',
+      totalScore: 'Score total : ', levelPassed: l => `Niveau ${l} réussi !`,
+      checkpointSaved: l => `Point de contrôle sauvegardé ! Tu reprends au niveau ${l}.`,
+      trophyAdded: name => `${name} ajouté à la collection !`,
+      unlockAt: l => `Atteins le niveau ${l} pour débloquer`, earned: l => `Obtenu — Niveau ${l}`,
+      resetLevel: 'Le niveau sera réinitialisé. Sûr ?',
+      navLevels: 'Niveles', navHome: 'Accueil', navSettings: 'Paramètres',
+      collectionTitle: 'COLLECTION', rewardsAch: 'RÉCOMPENSES & SUCCÈS', backToHome: 'Retour',
+      rotateDevice: 'Veuillez faire pivoter votre appareil en mode portrait.',
+      vipBtnText: 'MODE CHAOS (VIP)', 
+      vipLockedMsg: 'Atteignez le niveau 11 en Normal, Difficile et Cauchemar !',
+      tr_name_10: 'Trophée Deca-Escape', tr_desc_10: 'Le premier insigne de géométrie d\'élite pour avoir atteint le niveau 10 en mode libre.',
+      tr_name_30: 'Trophée Maître Vectoriel', tr_desc_30: 'Prix de maître en stratégie pour avoir géré sans faille les directions des flèches en atteignant le niveau 30.',
+      tr_name_50: 'Trophée Grand Maître Polyomino', tr_desc_50: 'Exclusif à ceux qui deviennent le souverain absolu de la géométrie des labyrinthes en atteignant le niveau 50.',
+      tr_name_70: 'Trophée Briseur de Boucle Infinie', tr_desc_70: 'Prix d\'intelligence supérieure pour avoir brisé des boucles complexes en atteignant le niveau 70.',
+      tr_name_100: 'Trophée Légende Absolue de Géométrie', tr_desc_100: 'Le légendaire Prix d\'Excellence Enes pour être entré dans l\'histoire en atteignant le Niveau 100 !'
+    },
+    es: {
+      playBtn: 'Jugar', continueBtn: 'Continuar', freeMode: 'MODO LIBRE',
+      campaignSub: (d, l) => `${d} - Nivel ${l}`, freeSub: l => `Nivel ${l}`,
+      footer: '¡Piensa, toca y libera las flechas!',
+      collection: 'Colección', rewards: 'Recompensas',
+      levels: 'NIVELES', normal: 'NORMAL', hard: 'DIFÍCIL', nightmare: 'PESADILLA', chaos: 'CAOS',
+      settings: 'AJUSTES', gameConfig: 'CONFIGURACIÓN DEL JUEGO',
+      music: 'Música / Sonido', vibration: 'Vibration', appearance: 'Apariencia', light: 'Claro', dark: 'Oscuro',
+      language: 'Idioma', resetData: 'Restablecer datos', tutorial: 'Tutorial', replay: 'Repetir',
+      resetConfirm: '¡Se eliminarán todos los progresos, estrellas, récords y trofeos! ¿Seguro?',
+      on: 'Activado', off: 'Desactivado', levelLabel: 'NIVEL', score: 'PUNTOS', record: 'RÉCORD', time: 'TIEMPO',
+      generating: 'Generando nivel…',
+      congrats: '¡Felicidades!', levelCleared: l => `¡Nivel ${l} completado!`,
+      gameOver: 'Fin del juego', yourScore: 'Puntuación: ', nextLevel: 'Siguiente nivel', mainMenu: 'Menú principal', retry: 'Reintentar',
+      totalScore: 'Puntuación total: ', levelPassed: l => `¡Nivel ${l} superado!`,
+      checkpointSaved: l => `¡Punto de control guardado! Continuarás desde el nivel ${l}.`,
+      trophyAdded: name => `¡${name} añadido a la colección!`,
+      unlockAt: l => `Alcanza el nivel ${l} para desbloquear`, earned: l => `Conseguido — Nivel ${l}`,
+      resetLevel: 'El nivel se restablecerá. ¿Seguro?',
+      navLevels: 'Niveles', navHome: 'Inicio', navSettings: 'Ajustes',
+      collectionTitle: 'COLECCIÓN', rewardsAch: 'RECOMPENSAS Y LOGROS', backToHome: 'Volver',
+      rotateDevice: 'Por favor, gire su dispositivo al modo vertical.',
+      vipBtnText: 'MODO CAOS (VIP)', 
+      vipLockedMsg: '¡Alcanza el Nivel 11 en Normal, Difícil y Pesadilla para desbloquear!',
+      tr_name_10: 'Trofeo Deca-Escape', tr_desc_10: 'La primera insignia de geometría de élite por alcanzar el Nivel 10 en el modo libre.',
+      tr_name_30: 'Trofeo Maestro Vectorial', tr_desc_30: 'Premio de maestro de estrategia por gestionar sin problemas las direcciones de las flechas al alcanzar el Nivel 30.',
+      tr_name_50: 'Trofeo Gran Maestro Polyomino', tr_desc_50: 'Exclusivo para aquellos que se convierten en el gobernante absoluto de la geometría del laberinto al alcanzar el Nivel 50.',
+      tr_name_70: 'Trofeo Rompebucles Infinito', tr_desc_70: 'Premio de inteligencia superior por romper bucles complejos al alcanzar el Nivel 70.',
+      tr_name_100: 'Trofeo Leyenda Absoluta de Geometría', tr_desc_100: '¡El legendario Premio al Logro de Enes por hacer historia al alcanzar el Nivel 100!'
+    },
+    ja: {
+      playBtn: 'プレイ', continueBtn: '続ける', freeMode: 'フリーモード',
+      campaignSub: (d, l) => `${d} - レベル ${l}`, freeSub: l => `レベル ${l}`,
+      footer: '考えて、タップして、矢印を解放しよう！',
+      collection: 'コレクション', rewards: '報酬',
+      levels: 'レベル', normal: '普通', hard: '難しい', nightmare: '悪夢', chaos: 'カオス',
+      settings: '設定', gameConfig: 'ゲーム設定',
+      music: '音楽 / 音', vibration: '振動', appearance: '外観', light: 'ライト', dark: 'ダーク',
+      language: '言語', resetData: 'データをリセット', tutorial: 'チュートリアル', replay: 'リプレイ',
+      resetConfirm: '全ての進捗、星、記録、トロフィーが削除されます！よろしいですか？',
+      on: 'オン', off: 'オフ', levelLabel: 'レベル', score: 'スコア', record: '記録', time: '時間',
+      generating: 'レベルを生成中…',
+      congrats: 'おめでとう！', levelCleared: l => `レベル ${l} クリア！`,
+      gameOver: 'ゲームオーバー', yourScore: 'スコア: ', nextLevel: '次のレベル', mainMenu: 'メインメニュー', retry: 'リトライ',
+      totalScore: '合計スコア: ', levelPassed: l => `レベル ${l} クリア！`,
+      checkpointSaved: l => `チェックポイント保存！レベル ${l} から再開します。`,
+      trophyAdded: name => `${name} をコレクションに追加！`,
+      unlockAt: l => `レベル ${l} で解放`, earned: l => `獲得済み — レベル ${l}`,
+      resetLevel: 'レベルをリセットしますか？',
+      navLevels: 'レベル', navHome: 'ホーム', navSettings: '設定',
+      collectionTitle: 'コレクション', rewardsAch: '報酬 & 実績', backToHome: '戻る',
+      rotateDevice: 'デバイスを縦向きに回転させてください。',
+      vipBtnText: 'カオスモード (VIP)', 
+      vipLockedMsg: 'ノーマル、ハード、悪夢でレベル11に到達して解放！',
+      tr_name_10: 'Deca-Escape トロフィー', tr_desc_10: 'フリーモードでレベル10に到達したエリート幾何学の最初のバッジ。',
+      tr_name_30: 'ベクトルマスター トロフィー', tr_desc_30: 'レベル30に到達し矢印の方向を完璧に管理した戦略マスターの賞。',
+      tr_name_50: 'ポリオミノグランドマスター トロフィー', tr_desc_50: 'レベル50に到達し、迷宮幾何学の絶対的支配者となった者専用。',
+      tr_name_70: '無限ループブレーカー トロフィー', tr_desc_70: 'レベル70に到達し複雑なループを打ち破った優れた知性の賞。',
+      tr_name_100: '絶対的幾何学レジェンド トロフィー', tr_desc_100: 'レベル100に到達し歴史に名を刻む伝説のEnes達成賞！'
+    },
+  };
+
+  let currentLang = Storage.get('setting_lang', 'en');
+  function T(key, ...args) {
+    const lang = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
+    const val = lang[key] !== undefined ? lang[key] : (TRANSLATIONS['en'][key] || key);
+    return typeof val === 'function' ? val(...args) : val;
+  }
+
+  function applyLanguage() {
+    const btnTextEl = document.getElementById('primaryPlayBtnText');
+    const serbestSub = document.getElementById('serbestBtnSub');
+    const campaignLastInfo = document.getElementById('campaignLastPlayedInfo');
+    
+    if (btnTextEl || serbestSub || campaignLastInfo) {
+      let hasSave = false;
+      ['normal', 'zor', 'kabus'].forEach(d => {
+        if (parseInt(Storage.get(`arrows_campaign_unlocked_${d}`, 1)) > 1) hasSave = true;
+      });
+      
+      if (btnTextEl) btnTextEl.textContent = hasSave ? T('continueBtn') : T('playBtn');
+
+      let lastCampaignLvl = parseInt(Storage.get(`arrows_campaign_unlocked_${currentDifficulty}`, 1));
+      if (lastCampaignLvl > TOTAL_LEVELS) lastCampaignLvl = TOTAL_LEVELS;
+      const modeNames = { normal: T('normal'), zor: T('hard'), kabus: T('nightmare'), chaos: T('chaos') };
+      
+      if (campaignLastInfo) campaignLastInfo.textContent = T('campaignSub', modeNames[currentDifficulty], lastCampaignLvl);
+
+      let savedSerbestLvl = parseInt(Storage.get('arrows_serbest_level', 1));
+      if (serbestSub) serbestSub.textContent = T('freeSub', savedSerbestLvl);
+    }
+
+    const footerEl = document.querySelector('#homeScreen .footer');
+    if (footerEl) footerEl.innerHTML = T('footer') + '<br>Designer Enes Özbek 😶‍🌫️';
+    
+    const collBtnText = document.getElementById('collectionBtnText');
+    if (collBtnText) collBtnText.textContent = T('collection');
+    const collBtnSub = document.getElementById('collectionBtnSub');
+    if (collBtnSub) collBtnSub.textContent = T('rewards');
+    
+    const menuTitle = document.querySelector('#menuScreen .title');
+    if (menuTitle) menuTitle.textContent = T('levels');
+    
+    const tabs = document.querySelectorAll('#menuScreen .tab-btn');
+    const tabKeys = ['normal', 'hard', 'nightmare', 'chaos'];
+    tabs.forEach((btn, i) => { if (tabKeys[i]) btn.textContent = T(tabKeys[i]); });
+    
+    const setTitle = document.querySelector('#settingsScreen .title');
+    if (setTitle) setTitle.textContent = T('settings');
+    const setEyebrow = document.querySelector('#settingsScreen .eyebrow');
+    if (setEyebrow) setEyebrow.textContent = T('gameConfig');
+    
+    const settingLabels = document.querySelectorAll('#settingsScreen .settings-label');
+    const labelKeys = ['music', 'vibration', 'appearance', 'language', 'tutorial'];
+    settingLabels.forEach((el, i) => { if (labelKeys[i]) el.textContent = T(labelKeys[i]); });
+    
+    const replayBtnText = document.getElementById('replayTutorialBtn');
+    if (replayBtnText) replayBtnText.textContent = T('replay');
+    
+    const dangerBtn = document.getElementById('resetSaveBtn');
+    if (dangerBtn) dangerBtn.textContent = T('resetData');
+    
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const navKeys = ['navLevels', 'navHome', 'navSettings'];
+    navBtns.forEach((btn, i) => {
+      const span = btn.querySelector('span');
+      if (span && navKeys[i]) span.textContent = T(navKeys[i]);
+    });
+    
+    const collTitle = document.querySelector('#collectionScreen .title');
+    if (collTitle) collTitle.textContent = T('collectionTitle');
+    const collEyebrow = document.querySelector('#collectionScreen .eyebrow');
+    if (collEyebrow) collEyebrow.textContent = T('rewardsAch');
+    
+    const backColl = document.querySelector('#backToHomeFromColl');
+    if (backColl) backColl.setAttribute('title', T('backToHome'));
+    
+    const statLabels = document.querySelectorAll('#gameScreen .stat-label');
+    const statKeys = ['levelLabel', 'score', 'record', 'time'];
+    statLabels.forEach((el, i) => { if (statKeys[i] && el.textContent !== '') el.textContent = T(statKeys[i]); });
+
+    const oriMsg = document.getElementById('orientationMsg');
+    if (oriMsg) oriMsg.textContent = T('rotateDevice');
+    
+    const vipBtnText = document.getElementById('vipBtnText');
+    if (vipBtnText) vipBtnText.textContent = T('vipBtnText');
+
+    const gameLevelEyebrow = document.getElementById('gameLevelEyebrow');
+    if (gameLevelEyebrow && !gameLevelEyebrow.textContent.includes('FREE') && !gameLevelEyebrow.textContent.includes('SERBEST')) {
+        const modeKeyMap = { normal: 'normal', zor: 'hard', kabus: 'nightmare', chaos: 'chaos' };
+        gameLevelEyebrow.textContent = `${T(modeKeyMap[currentDifficulty] || 'normal').toUpperCase()} - LEVEL ${level}`;
+    } else if (gameLevelEyebrow && gameMode === 'serbest') {
+        gameLevelEyebrow.textContent = `${T('freeMode')} - LEVEL ${level}`;
+    }
+
+    updateSettingsUI();
+    if (!collectionScreen.classList.contains('hidden')) renderCollection();
+  }
+
+  let settings = {
+    music: Storage.get('setting_music', 'true') === 'true',
+    vibe: Storage.get('setting_vibe', 'true') === 'true',
+    theme: Storage.get('setting_theme', 'light')
+  };
+
+  let gameMode = 'campaign'; 
+  let currentDifficulty = 'normal'; 
+  let level = 1;
+  let grid = [];
+  let hearts = 3;
+  let score = 0;
+  let status = 'playing';
+  
+  let startTime = 0;
+  let gameIntervalId = null;
+  let goldTime = 3;   
+  let silverTime = 5;
+  let isAnimating = false; 
+  let activeAnimationsCount = 0; 
+  let tutorialStep = parseInt(Storage.get('tutorial_step', '0'));
+
+  const homeScreen = document.getElementById('homeScreen');
+  const menuScreen = document.getElementById('menuScreen');
+  const settingsScreen = document.getElementById('settingsScreen');
+  const collectionScreen = document.getElementById('collectionScreen'); 
+  const gameScreen = document.getElementById('gameScreen');
+  const appBottomNav = document.getElementById('appBottomNav');
+  
+  const levelGrid = document.getElementById('levelGrid');
+  const collectionList = document.getElementById('collectionList'); 
+  const boardEl = document.getElementById('board');
+  const levelVal = document.getElementById('levelVal');
+  const scoreVal = document.getElementById('scoreVal');
+  const highScoreVal = document.getElementById('highScoreVal');
+  const heartsEl = document.getElementById('hearts');
+  const timeVal = document.getElementById('timeVal');
+  const liveStarsEl = document.getElementById('liveStars');
+  const timeTargetsVal = document.getElementById('timeTargetsVal');
+  const timerStat = document.getElementById('timerStat'); 
+  const overlay = document.getElementById('overlay');
+  const overlayIcon = document.getElementById('overlayIcon');
+  const overlayMsg = document.getElementById('overlayMsg');
+  const overlayStars = document.getElementById('overlayStars');
+  const overlayScore = document.getElementById('overlayScore');
+  const overlayBtnGroup = document.getElementById('overlayBtnGroup');
+  const resetBtn = document.getElementById('resetBtn');
+  const backToMenuBtn = document.getElementById('backToMenuBtn');
+  const gameLevelEyebrow = document.getElementById('gameLevelEyebrow');
+  const tutorialPointer = document.getElementById('tutorialPointer');
+  
+  const primaryPlayBtn = document.getElementById('primaryPlayBtn');
+  const serbestPlayBtn = document.getElementById('serbestPlayBtn'); 
+  const chaosPlayBtn = document.getElementById('chaosPlayBtn');
+  const chaosBtnSub = document.getElementById('chaosBtnSub');
+  const chaosInfoBtn = document.getElementById('chaosInfoBtn');
+  const difficultyTabs = document.getElementById('difficultyTabs');
+  const collectionBtn = document.getElementById('collectionBtn'); 
+  const backToHomeFromColl = document.getElementById('backToHomeFromColl'); 
+  const navLevelsBtn = document.getElementById('navLevelsBtn');
+  const navHomeBtn = document.getElementById('navHomeBtn');
+  const navSettingsBtn = document.getElementById('navSettingsBtn');
+  const toggleMusicBtn = document.getElementById('toggleMusicBtn');
+  const toggleVibeBtn = document.getElementById('toggleVibeBtn');
+  const replayTutorialBtn = document.getElementById('replayTutorialBtn');
+
+  const collectionIconSpan = document.getElementById('collectionIconSpan');
+  if (collectionIconSpan) collectionIconSpan.innerHTML = ICONS.collectionIcon;
+  const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+  const resetSaveBtn = document.getElementById('resetSaveBtn');
+
+  async function lockOrientation() {
+    if (typeof screen !== "undefined" && screen.orientation && screen.orientation.lock) {
+      try { await screen.orientation.lock("portrait"); } catch(e) {}
+    }
+  }
+
+  function getLastCheckpoint(lvl) {
+    if (lvl < 10) return 1;
+    return Math.floor(lvl / 10) * 10;
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  function checkTutorial() {
+    if (tutorialStep >= 2) {
+      tutorialPointer.style.display = 'none';
+      return;
+    }
+    
+    if (tutorialStep === 0 && !homeScreen.classList.contains('hidden')) {
+      const btn = document.getElementById('primaryPlayBtn');
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        tutorialPointer.style.display = 'block';
+        tutorialPointer.style.left = (rect.left + rect.width / 2 - 32) + 'px';
+        tutorialPointer.style.top = (rect.top + rect.height / 2 + 10) + 'px';
+      }
+    } else if (tutorialStep === 1 && !gameScreen.classList.contains('hidden') && status === 'playing') {
+      let targetId = null;
+      for(let y = 0; y < grid.length; y++) {
+        for(let x = 0; x < grid.length; x++) {
+          if(grid[y][x] && grid[y][x].id && isPieceRemovable(grid, grid[y][x].id)) {
+            targetId = grid[y][x].id; break;
+          }
+        }
+        if(targetId) break;
+      }
+      if (targetId) {
+        const el = document.querySelector(`.cell[data-id="${targetId}"][data-idx="0"]`);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          tutorialPointer.style.display = 'block';
+          tutorialPointer.style.left = (rect.left + rect.width / 2 - 32) + 'px';
+          tutorialPointer.style.top = (rect.top + rect.height / 2 + 10) + 'px';
+        }
+      } else { tutorialPointer.style.display = 'none'; }
+    } else { tutorialPointer.style.display = 'none'; }
+  }
+  window.addEventListener('resize', checkTutorial);
+
+  // 🛠️ YENİ: Kaos Modunun kilit açılma şartı 11. Seviyeye çekildi.
+  function isChaosUnlocked() {
+    return parseInt(Storage.get('arrows_campaign_unlocked_normal', 1)) > 10 &&
+           parseInt(Storage.get('arrows_campaign_unlocked_zor', 1)) > 10 &&
+           parseInt(Storage.get('arrows_campaign_unlocked_kabus', 1)) > 10;
+  }
+
+  function checkSaveState() {
+    let hasSave = false;
+    ['normal', 'zor', 'kabus'].forEach(d => { if (parseInt(Storage.get(`arrows_campaign_unlocked_${d}`, 1)) > 1) hasSave = true; });
+    
+    const btnTextEl = document.getElementById('primaryPlayBtnText');
+    if (btnTextEl) btnTextEl.textContent = hasSave ? T('continueBtn') : T('playBtn');
+
+    let lastCampaignLvl = parseInt(Storage.get(`arrows_campaign_unlocked_${currentDifficulty}`, 1));
+    if (lastCampaignLvl > TOTAL_LEVELS) lastCampaignLvl = TOTAL_LEVELS;
+    const modeNames = { normal: T('normal'), zor: T('hard'), kabus: T('nightmare'), chaos: T('chaos') };
+    document.getElementById('campaignLastPlayedInfo').textContent = T('campaignSub', modeNames[currentDifficulty], lastCampaignLvl);
+
+    let savedSerbestLvl = parseInt(Storage.get('arrows_serbest_level', 1));
+    document.getElementById('serbestBtnSub').textContent = T('freeSub', savedSerbestLvl);
+
+    if (isChaosUnlocked()) {
+      chaosPlayBtn.classList.remove('locked');
+      chaosBtnSub.style.display = 'none';
+      if (chaosInfoBtn) chaosInfoBtn.style.display = 'none'; // Kilit açıldığında ! butonunu gizle
+    } else {
+      chaosPlayBtn.classList.add('locked');
+      chaosBtnSub.style.display = 'block';
+      if (chaosInfoBtn) chaosInfoBtn.style.display = 'flex'; // Kilitliyse ! butonunu göster
+    }
+  }
+
+  function showScreen(target) {
+    homeScreen.classList.add('hidden');
+    menuScreen.classList.add('hidden');
+    settingsScreen.classList.add('hidden');
+    collectionScreen.classList.add('hidden'); 
+    gameScreen.classList.add('hidden');
+    appBottomNav.classList.remove('hidden');
+    document.body.classList.remove('chaos-theme'); 
+
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+    if (target === 'home') {
+      homeScreen.classList.remove('hidden');
+      navHomeBtn.classList.add('active');
+      checkSaveState();
+    } else if (target === 'menu') {
+      menuScreen.classList.remove('hidden');
+      navLevelsBtn.classList.add('active');
+      document.querySelector('.tab-btn[data-mode="chaos"]').style.display = isChaosUnlocked() ? 'block' : 'none';
+      renderMenu();
+    } else if (target === 'settings') {
+      settingsScreen.classList.remove('hidden');
+      navSettingsBtn.classList.add('active');
+      updateSettingsUI();
+    } else if (target === 'collection') { 
+      collectionScreen.classList.remove('hidden');
+      appBottomNav.classList.add('hidden');
+      renderCollection();
+    } else if (target === 'game') {
+      gameScreen.classList.remove('hidden');
+      appBottomNav.classList.add('hidden'); 
+    }
+    
+    setTimeout(checkTutorial, 50); 
+  }
+
+  function renderCollection() {
+    collectionList.innerHTML = '';
+    const trophies = [
+      { id: 'lvl10', name: T('tr_name_10'), desc: T('tr_desc_10'), milestone: 10 },
+      { id: 'lvl30', name: T('tr_name_30'), desc: T('tr_desc_30'), milestone: 30 },
+      { id: 'lvl50', name: T('tr_name_50'), desc: T('tr_desc_50'), milestone: 50 },
+      { id: 'lvl70', name: T('tr_name_70'), desc: T('tr_desc_70'), milestone: 70 },
+      { id: 'lvl100', name: T('tr_name_100'), desc: T('tr_desc_100'), milestone: 100 }
+    ];
+
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex'; wrapper.style.flexDirection = 'column'; wrapper.style.gap = '12px';
+
+    trophies.forEach(t => {
+      const isUnlocked = Storage.get(`arrows_trophy_${t.id}`, 'false') === 'true';
+      const card = document.createElement('div');
+      card.className = 'settings-row'; card.style.gap = '16px'; card.style.padding = '16px'; card.style.justifyContent = 'flex-start'; card.style.textAlign = 'left';
+
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;flex-shrink:0;">
+          ${isUnlocked ? `<svg viewBox="0 0 24 24" fill="none" stroke="#F4A261" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="40" height="40" opacity="0.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`}
+        </div>
+        <div style="flex: 1;">
+          <div class="settings-label" style="font-size: 16px; color: ${isUnlocked ? '#F4A261' : 'var(--text-muted)'};">${t.name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); line-height: 1.3; margin-top: 4px;">${t.desc}</div>
+          ${isUnlocked ? `<div style="margin-top:6px;display:flex;gap:4px;align-items:center;"><svg viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" width="13" height="13" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:11px;color:#2EC4B6;font-weight:700;">${T('earned', t.milestone)}</span></div>` : `<div style="margin-top:6px;display:flex;gap:4px;align-items:center;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" width="13" height="13" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span style="font-size:11px;color:var(--text-muted);">${T('unlockAt', t.milestone)}</span></div>`}
+        </div>
+      `;
+      wrapper.appendChild(card);
+    });
+    collectionList.appendChild(wrapper);
+  }
+
+  function updateSettingsUI() {
+    toggleMusicBtn.textContent = settings.music ? T('on') : T('off');
+    settings.music ? toggleMusicBtn.classList.add('active') : toggleMusicBtn.classList.remove('active');
+    toggleVibeBtn.textContent = settings.vibe ? T('on') : T('off');
+    settings.vibe ? toggleVibeBtn.classList.add('active') : toggleVibeBtn.classList.remove('active');
+    toggleThemeBtn.textContent = settings.theme === 'dark' ? T('dark') : T('light');
+    if(settings.theme === 'dark') { document.body.classList.add('dark-theme'); toggleThemeBtn.classList.add('active'); } 
+    else { document.body.classList.remove('dark-theme'); toggleThemeBtn.classList.remove('active'); }
+    const langSelect = document.getElementById('langSelect'); if (langSelect) langSelect.value = currentLang;
+  }
+
+  function getStarRatingHTML(count) {
+    let html = '';
+    for (let i = 1; i <= 3; i++) html += i <= count ? ICONS.starFilled : ICONS.starEmpty;
+    return html;
+  }
+
+  function renderMenu() {
+    levelGrid.innerHTML = '';
+    stopLiveTimer();
+
+    let unlockedLevel = parseInt(Storage.get(`arrows_campaign_unlocked_${currentDifficulty}`, 1));
+    let campaignStars = {};
+    try { campaignStars = JSON.parse(Storage.get(`arrows_campaign_stars_${currentDifficulty}`, '{}')); } catch(e){}
+
+    for (let l = 1; l <= TOTAL_LEVELS; l++) {
+      const btn = document.createElement('button'); btn.className = 'level-btn';
+      if (l <= unlockedLevel) {
+        if (l < unlockedLevel || campaignStars[l]) btn.classList.add('completed');
+        else btn.classList.add('unlocked');
+        
+        const numSpan = document.createElement('span'); numSpan.className = 'num'; numSpan.textContent = l; btn.appendChild(numSpan);
+        const starsDiv = document.createElement('div'); starsDiv.className = 'mini-stars';
+        const starsEarned = campaignStars[l] || 0; starsDiv.innerHTML = getStarRatingHTML(starsEarned); btn.appendChild(starsDiv);
+        btn.addEventListener('click', () => { lockOrientation(); startCampaignLevel(l); });
+      } else {
+        btn.classList.add('locked'); btn.innerHTML = ICONS.lockIcon;
+      }
+      levelGrid.appendChild(btn);
+    }
+  }
+
+  function startLiveTimer() {
+    stopLiveTimer();
+    startTime = Date.now();
+    gameIntervalId = setInterval(() => {
+      if (status === 'playing') {
+        const passed = Math.floor((Date.now() - startTime) / 1000);
+        const m = Math.floor(passed / 60).toString().padStart(2, '0');
+        const s = (passed % 60).toString().padStart(2, '0');
+        timeVal.textContent = `${m}:${s}`;
+        let currentLiveStars = 1;
+        if (passed <= goldTime) currentLiveStars = 3;
+        else if (passed <= silverTime) currentLiveStars = 2;
+        liveStarsEl.innerHTML = getStarRatingHTML(currentLiveStars);
+      }
+    }, 500);
+  }
+
+  function stopLiveTimer() { if (gameIntervalId) clearInterval(gameIntervalId); gameIntervalId = null; }
+
+  async function startSerbestLevel(l) {
+    gameMode = 'serbest'; level = l; hearts = 3; score = 0; status = 'playing';
+    let mode = 'normal';
+    if (level >= 75) mode = 'chaos'; else if (level >= 50) mode = 'kabus'; else if (level >= 25) mode = 'zor';
+
+    showScreen('game'); 
+    
+    if (mode === 'chaos') document.body.classList.add('chaos-theme');
+    
+    overlay.classList.remove('hidden');
+    overlayIcon.innerHTML = '<div style="font-size:32px;animation:spin 1s linear infinite;display:inline-block">⏳</div>';
+    overlayMsg.textContent = T('generating'); overlayScore.textContent = ''; overlayStars.innerHTML = ''; overlayBtnGroup.innerHTML = '';
+
+    grid = await generateLevel(level, mode);
+
+    overlay.classList.add('hidden');
+    gameLevelEyebrow.textContent = `${T('freeMode')} - LEVEL ${level}`;
+    if (timerStat) timerStat.style.display = 'none';
+    if (resetBtn) resetBtn.classList.add('hidden');
+
+    renderStats(); renderBoard(); stopLiveTimer(); 
+  }
+
+  async function startCampaignLevel(l) {
+    gameMode = 'campaign'; level = l; hearts = 3; score = 0; status = 'playing';
+
+    showScreen('game'); 
+    
+    if (currentDifficulty === 'chaos') document.body.classList.add('chaos-theme');
+
+    overlay.classList.remove('hidden');
+    overlayIcon.innerHTML = '<div style="font-size:32px;animation:spin 1s linear infinite;display:inline-block">⏳</div>';
+    overlayMsg.textContent = T('generating'); overlayScore.textContent = ''; overlayStars.innerHTML = ''; overlayBtnGroup.innerHTML = '';
+
+    grid = await generateLevel(level, currentDifficulty); 
+    
+    let totalBlocks = 0; const pieceIds = new Set();
+    for (let row of grid) {
+      for (let c of row) { if (c && c.id) { pieceIds.add(c.id); totalBlocks++; } }
+    }
+    const pieceCount = pieceIds.size;
+    
+    if (currentDifficulty === 'chaos') {
+      goldTime = Math.ceil((pieceCount * 1.5) + ((totalBlocks - pieceCount) * 0.5) + 3);
+      silverTime = Math.ceil(goldTime * 1.3);
+    } else if (currentDifficulty === 'kabus') {
+      goldTime = Math.ceil((pieceCount * 2.0) + ((totalBlocks - pieceCount) * 1.0) + 4);
+      silverTime = Math.ceil(goldTime * 1.5);
+    } else {
+      goldTime = Math.ceil((pieceCount * 3.0) + ((totalBlocks - pieceCount) * 1.5) + 5);
+      silverTime = Math.ceil(goldTime * 1.8);
+    }
+    if (goldTime < 10) goldTime = 10;
+
+    overlay.classList.add('hidden');
+    
+    const modeKeyMap = { normal: 'normal', zor: 'hard', kabus: 'nightmare', chaos: 'chaos' };
+    gameLevelEyebrow.textContent = `${T(modeKeyMap[currentDifficulty] || 'normal').toUpperCase()} - LEVEL ${level}`;
+    timeVal.textContent = "00:00";
+    
+    if (timerStat) timerStat.style.display = 'block';
+    const starSVG = `<svg viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="1.5" width="13" height="13" style="vertical-align:middle;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    if (timeTargetsVal) { timeTargetsVal.innerHTML = `${starSVG}${starSVG}${starSVG} &lt;${goldTime}s &nbsp;|&nbsp; ${starSVG}${starSVG} &lt;${silverTime}s`; }
+    liveStarsEl.innerHTML = getStarRatingHTML(3);
+    
+    if (resetBtn) resetBtn.classList.remove('hidden');
+
+    renderStats(); renderBoard(); startLiveTimer();
+  }
+
+  function renderHearts() {
+    heartsEl.innerHTML = '';
+    for (let i = 0; i < 3; i++) heartsEl.innerHTML += i < hearts ? ICONS.heartFilled : ICONS.heartEmpty;
+  }
+
+  function renderStats() {
+    levelVal.textContent = level; scoreVal.textContent = score;
+    let scoreKey = (gameMode === 'serbest') ? 'arrows_serbest_high_score' : 'arrows_campaign_high_score';
+    highScoreVal.textContent = parseInt(Storage.get(scoreKey, 0));
+    renderHearts();
+  }
+
+  function renderBoard() {
+    const size = grid.length;
+    boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+    const gapSize = size > 14 ? '2px' : (size > 7 ? '4px' : '6px');
+    boardEl.style.gap = gapSize; boardEl.style.padding = size > 14 ? '4px' : '10px';
+    boardEl.innerHTML = '';
+    const iconSize = Math.max(8, 30 - size * 1.1);
+
+    const fragment = document.createDocumentFragment();
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const cell = grid[y][x];
+        const div = document.createElement('div');
+        div.className = 'cell' + (cell ? ' filled' : '');
+        div.setAttribute('data-cx', x); div.setAttribute('data-cy', y);
+        
+        if (cell) {
+          if (cell.type === 'wall' || cell.type === 'ice' || cell.type === 'portal') {
+            div.classList.add(`block-${cell.type}`);
+            if (cell.type === 'wall') div.innerHTML = ICONS.wallBlock;
+            else if (cell.type === 'ice') div.innerHTML = ICONS.iceBlock;
+            else if (cell.type === 'portal') {
+              div.innerHTML = ICONS.portalBlock;
+              div.querySelector('svg').style.stroke = cell.color;
+            }
+          } else {
+            const id = cell.id;
+            div.setAttribute('data-id', id); div.setAttribute('data-idx', cell.idx);
+            const hue = (id * 137.5) % 360; div.setAttribute('data-hue', hue);
+            
+            div.style.backgroundColor = `hsl(${hue}, 85%, 88%)`; div.style.opacity = '1'; 
+            
+            const hasTop = y > 0 && grid[y-1][x] && grid[y-1][x].id === id;
+            const hasBottom = y < size-1 && grid[y+1][x] && grid[y+1][x].id === id;
+            const hasLeft = x > 0 && grid[y][x-1] && grid[y][x-1].id === id;
+            const hasRight = x < size-1 && grid[y][x+1] && grid[y][x+1].id === id;
+            
+            const borderStyle = size > 14 ? `1px solid hsl(${hue}, 55%, 72%)` : `2px solid hsl(${hue}, 55%, 72%)`;
+            div.style.borderTop = hasTop ? 'none' : borderStyle;
+            div.style.borderBottom = hasBottom ? 'none' : borderStyle;
+            div.style.borderLeft = hasLeft ? 'none' : borderStyle;
+            div.style.borderRight = hasRight ? 'none' : borderStyle;
+            
+            const rVal = size > 14 ? '3px' : (size > 7 ? '6px' : '12px');
+            div.style.borderTopLeftRadius = (hasTop || hasLeft) ? '0px' : rVal;
+            div.style.borderTopRightRadius = (hasTop || hasRight) ? '0px' : rVal;
+            div.style.borderBottomLeftRadius = (hasBottom || hasLeft) ? '0px' : rVal;
+            div.style.borderBottomRightRadius = (hasBottom || hasRight) ? '0px' : rVal;
+
+            if (cell.isHead) {
+              div.innerHTML = ICONS[cell.dir];
+              const svg = div.querySelector('svg');
+              if (svg) { svg.style.width = iconSize + 'px'; svg.style.height = iconSize + 'px'; svg.style.stroke = `hsl(${hue}, 80%, 25%)`; svg.style.strokeWidth = size > 14 ? '4' : '3'; }
+            }
+
+            div.tabIndex = 0; div.setAttribute('role', 'button');
+            div.addEventListener('click', () => handleCellClick(id, cell.dir, cell.length));
+            div.addEventListener('touchend', (e) => { if (e.cancelable) { e.preventDefault(); } handleCellClick(id, cell.dir, cell.length); });
+            div.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick(id, cell.dir, cell.length); } });
+            div.addEventListener('mouseenter', () => { document.querySelectorAll(`[data-id="${id}"]`).forEach(el => { const h = el.getAttribute('data-hue'); el.style.backgroundColor = `hsl(${h}, 95%, 80%)`; }); });
+            div.addEventListener('mouseleave', () => { document.querySelectorAll(`[data-id="${id}"]`).forEach(el => { const h = el.getAttribute('data-hue'); el.style.backgroundColor = `hsl(${h}, 85%, 88%)`; }); });
+            div.addEventListener('touchstart', () => { document.querySelectorAll(`[data-id="${id}"]`).forEach(el => { const h = el.getAttribute('data-hue'); el.style.backgroundColor = `hsl(${h}, 95%, 80%)`; }); }, { passive: true });
+          }
+        }
+        fragment.appendChild(div);
+      }
+    }
+    
+    boardEl.appendChild(fragment);
+    setTimeout(checkTutorial, 50); 
+  }
+
+  function handleCellClick(id, dirKey, length) {
+    if (status !== 'playing') return;
+    initAudio();
+    
+    if (tutorialStep === 1) { tutorialStep = 2; Storage.set('tutorial_step', '2'); checkTutorial(); }
+
+    const pieceCells = [];
+    let head = null;
+    for (let gy = 0; gy < grid.length; gy++) {
+      for (let gx = 0; gx < grid.length; gx++) {
+        if (grid[gy][gx] && grid[gy][gx].id === id) {
+          pieceCells.push({ x: gx, y: gy, idx: grid[gy][gx].idx });
+          if (grid[gy][gx].isHead) head = { x: gx, y: gy };
+        }
+      }
+    }
+    
+    if (pieceCells.length === 0) return;
+    const headEl = document.querySelector(`[data-id="${id}"][data-idx="0"]`);
+    if (headEl && headEl.getAttribute('data-animating') === 'true') return;
+
+    pieceCells.sort((a, b) => a.idx - b.idx);
+    const { dx, dy } = DIRS[dirKey];
+    const stepsOut = 4; 
+
+    const res = getEscapeResult(grid, id);
+
+    if (res.status === 'clear') {
+      playSound('success'); triggerVibe(60); 
+      
+      for (let gy = 0; gy < grid.length; gy++) {
+        for (let gx = 0; gx < grid.length; gx++) { if (grid[gy][gx] && grid[gy][gx].id === id) grid[gy][gx] = null; }
+      }
+
+      pieceCells.forEach(cellInfo => {
+        const el = document.querySelector(`[data-id="${id}"][data-idx="${cellInfo.idx}"]`);
+        if (el) el.style.pointerEvents = 'none';
+      });
+
+      const speedPerCell = Math.max(40, 90 - grid.length * 2); 
+      const pieceScore = length * 60; score += pieceScore;
+      
+      // 🛠️ YENİ DÜZELTME: 24. seviye bittikten sonra oyun devam etmez.
+      const won = !grid.some(row => row.some(c => c && c.id));
+      
+      const timePassed = Math.floor((Date.now() - startTime) / 1000);
+      let finalStars = 0;
+
+      if (won) {
+        status = 'win_pending'; stopLiveTimer();
+        
+        if (gameMode === 'serbest') {
+          Storage.set('arrows_serbest_level', level + 1);
+          if (level === 9) Storage.set('arrows_trophy_lvl10', 'true');
+          if (level === 29) Storage.set('arrows_trophy_lvl30', 'true');
+          if (level === 49) Storage.set('arrows_trophy_lvl50', 'true');
+          if (level === 69) Storage.set('arrows_trophy_lvl70', 'true');
+          if (level === 99) Storage.set('arrows_trophy_lvl100', 'true');
+        } else {
+          if (timePassed <= goldTime) finalStars = 3; else if (timePassed <= silverTime) finalStars = 2; else finalStars = 1;
+          score += Math.max(0, 500 - timePassed * 5); 
+
+          let campaignStars = {};
+          try { campaignStars = JSON.parse(Storage.get(`arrows_campaign_stars_${currentDifficulty}`, '{}')); } catch(e){}
+          const previousStars = campaignStars[level] || 0;
+          if (finalStars > previousStars) {
+            campaignStars[level] = finalStars; Storage.set(`arrows_campaign_stars_${currentDifficulty}`, JSON.stringify(campaignStars));
+          }
+
+          // 🛠️ DÜZELTME: Kilit mantığı <= TOTAL_LEVELS olarak değiştirildi, aksi halde oyunu bitiren Kaos modunu açamıyordu!
+          let unlockedLevel = parseInt(Storage.get(`arrows_campaign_unlocked_${currentDifficulty}`, 1));
+          if (level === unlockedLevel && unlockedLevel <= TOTAL_LEVELS) {
+            unlockedLevel = level + 1; Storage.set(`arrows_campaign_unlocked_${currentDifficulty}`, unlockedLevel);
+          }
+        }
+      }
+
+      let scoreKey = (gameMode === 'serbest') ? 'arrows_serbest_high_score' : 'arrows_campaign_high_score';
+      let activeHighScore = parseInt(Storage.get(scoreKey, 0));
+      if (score > activeHighScore) { 
+        Storage.set(scoreKey, score); 
+      }
+
+      renderStats(); 
+
+      isAnimating = true; activeAnimationsCount++; 
+
+      const animPromises = pieceCells.map(cellInfo => {
+        const i = cellInfo.idx; const el = document.querySelector(`[data-id="${id}"][data-idx="${i}"]`);
+        if (!el) return Promise.resolve();
+        createBurstParticles(el, el.getAttribute('data-hue'));
+
+        let keyframes = [];
+        const startX = cellInfo.x; const startY = cellInfo.y;
+        
+        for (let j = i; j >= 0; j--) {
+           const tx = (pieceCells[j].x - startX) * 106; const ty = (pieceCells[j].y - startY) * 106;
+           keyframes.push({ transform: `translate(${tx}%, ${ty}%) scale(0.95)`, opacity: 1 });
+        }
+        
+        let outPath = [...res.path];
+        let lastX = outPath.length > 0 ? outPath[outPath.length - 1].x : head.x;
+        let lastY = outPath.length > 0 ? outPath[outPath.length - 1].y : head.y;
+        for(let s = 1; s <= stepsOut; s++) {
+            outPath.push({ x: lastX + dx * s, y: lastY + dy * s });
+        }
+        
+        for (let s = 0; s < outPath.length; s++) {
+          let pt = outPath[s];
+          const tx = (pt.x - startX) * 106; const ty = (pt.y - startY) * 106;
+          if (pt.isPortalJump) {
+             keyframes.push({ transform: `translate(${tx}%, ${ty}%) scale(0)`, opacity: 0 }); 
+             if(outPath[s+1]) {
+                const nx = (outPath[s+1].x - startX) * 106; const ny = (outPath[s+1].y - startY) * 106;
+                keyframes.push({ transform: `translate(${nx}%, ${ny}%) scale(0)`, opacity: 0 }); 
+             }
+          } else {
+             keyframes.push({ transform: `translate(${tx}%, ${ty}%) scale(0.95)`, opacity: 1 });
+          }
+        }
+
+        const anim = el.animate(keyframes, { duration: keyframes.length * speedPerCell, easing: 'linear', fill: 'forwards' });
+        return anim.finished.then(() => { el.style.opacity = '0'; });
+      });
+
+      Promise.all(animPromises).then(() => {
+        isAnimating = false; activeAnimationsCount--; 
+        
+        if (activeAnimationsCount === 0 && status === 'win_pending') {
+          status = 'win'; playSound('win'); triggerVibe([100, 50, 100]); showOverlay('win', finalStars); 
+        }
+      });
+
+    } else if (res.status === 'ice') {
+      playSound('ice'); triggerVibe(100); 
+
+      pieceCells.forEach(cellInfo => {
+         const el = document.querySelector(`[data-id="${id}"][data-idx="${cellInfo.idx}"]`);
+         if(el) el.setAttribute('data-animating', 'true');
+      });
+      isAnimating = true; activeAnimationsCount++;
+
+      const iceX = res.cell.x; const iceY = res.cell.y;
+      const iceEl = document.querySelector(`.cell[data-cx="${iceX}"][data-cy="${iceY}"]`);
+      grid[iceY][iceX] = null; 
+
+      let freeSteps = res.freeSteps;
+      const trackPoints = [];
+      for (let j = pieceCells.length - 1; j >= 0; j--) trackPoints.push({ x: pieceCells[j].x, y: pieceCells[j].y });
+      for (let s = 0; s < res.path.length; s++) trackPoints.push({ x: res.path[s].x, y: res.path[s].y });
+      
+      let endX = trackPoints[trackPoints.length - 1].x;
+      let endY = trackPoints[trackPoints.length - 1].y;
+      trackPoints.push({ x: endX + dx * 0.22, y: endY + dy * 0.22 });
+
+      function getTrackPos(startTrackIdx, stepAmount) {
+        let targetIdx = startTrackIdx + stepAmount; let f = Math.floor(targetIdx); let c = Math.ceil(targetIdx);
+        if (f === c) return { x: trackPoints[f].x, y: trackPoints[f].y };
+        let pct = targetIdx - f; return { x: trackPoints[f].x + (trackPoints[c].x - trackPoints[f].x) * pct, y: trackPoints[f].y + (trackPoints[c].y - trackPoints[f].y) * pct };
+      }
+
+      pieceCells.forEach(cellInfo => {
+        const i = cellInfo.idx; const el = document.querySelector(`[data-id="${id}"][data-idx="${i}"]`); if (!el) return;
+        const startX = cellInfo.x; const startY = cellInfo.y; const startTrackIdx = pieceCells.length - 1 - i; 
+        const cellKeyframes = [];
+
+        for (let s = 0; s <= freeSteps; s++) {
+          let pt = getTrackPos(startTrackIdx, s); let offset = (freeSteps + 0.22 > 0) ? (s / (freeSteps + 0.22)) * 0.4 : 0;
+          cellKeyframes.push({ transform: `translate(${(pt.x - startX) * 104}%, ${(pt.y - startY) * 104}%) scale(0.95)`, offset: offset });
+        }
+        let peakPt = getTrackPos(startTrackIdx, freeSteps + 0.22);
+        cellKeyframes.push({ transform: `translate(${(peakPt.x - startX) * 104}%, ${(peakPt.y - startY) * 104}%) scale(0.95)`, offset: 0.4 });
+        let recoilPt = getTrackPos(startTrackIdx, freeSteps);
+        cellKeyframes.push({ transform: `translate(${(recoilPt.x - startX) * 104}%, ${(recoilPt.y - startY) * 104}%) scale(0.95)`, offset: 0.5 });
+        for (let s = freeSteps; s >= 0; s--) {
+          let pt = getTrackPos(startTrackIdx, s); let progress = freeSteps > 0 ? (freeSteps - s) / freeSteps : 1;
+          cellKeyframes.push({ transform: `translate(${(pt.x - startX) * 104}%, ${(pt.y - startY) * 104}%) scale(0.95)`, offset: 0.5 + progress * 0.5 });
+        }
+        el.animate(cellKeyframes, { duration: 300 + freeSteps * 40, easing: 'cubic-bezier(0.25, 1, 0.5, 1)', fill: 'forwards' });
+      });
+
+      setTimeout(() => { if (iceEl) { createBurstParticles(iceEl, 190); iceEl.style.opacity = 0; } }, (freeSteps + 1) * 40);
+
+      const bounceDuration = 300 + freeSteps * 40;
+      setTimeout(() => { 
+        isAnimating = false; activeAnimationsCount--;
+        pieceCells.forEach(cellInfo => {
+          const el = document.querySelector(`[data-id="${id}"][data-idx="${cellInfo.idx}"]`);
+          if (el) el.removeAttribute('data-animating');
+        });
+        
+        if (iceEl) {
+           iceEl.className = 'cell'; 
+           iceEl.innerHTML = ''; 
+           iceEl.removeAttribute('style'); 
+        }
+      }, bounceDuration);
+
+    } else {
+      pieceCells.forEach(cellInfo => {
+         const el = document.querySelector(`[data-id="${id}"][data-idx="${cellInfo.idx}"]`);
+         if(el) el.setAttribute('data-animating', 'true');
+      });
+
+      playSound('error'); triggerVibe(200); triggerScreenShake(); 
+      score = Math.max(0, score - 20); hearts--; renderStats();
+      
+      isAnimating = true; activeAnimationsCount++;
+      let freeSteps = res.freeSteps;
+      const trackPoints = [];
+      for (let j = pieceCells.length - 1; j >= 0; j--) trackPoints.push({ x: pieceCells[j].x, y: pieceCells[j].y });
+      for (let s = 0; s < res.path.length; s++) trackPoints.push({ x: res.path[s].x, y: res.path[s].y });
+      
+      let endX = trackPoints[trackPoints.length - 1].x;
+      let endY = trackPoints[trackPoints.length - 1].y;
+      trackPoints.push({ x: endX + dx * 0.22, y: endY + dy * 0.22 });
+
+      function getTrackPos(startTrackIdx, stepAmount) {
+        let targetIdx = startTrackIdx + stepAmount; let f = Math.floor(targetIdx); let c = Math.ceil(targetIdx);
+        if (f === c) return { x: trackPoints[f].x, y: trackPoints[f].y };
+        let pct = targetIdx - f; return { x: trackPoints[f].x + (trackPoints[c].x - trackPoints[f].x) * pct, y: trackPoints[f].y + (trackPoints[c].y - trackPoints[f].y) * pct };
+      }
+
+      pieceCells.forEach(cellInfo => {
+        const i = cellInfo.idx; const el = document.querySelector(`[data-id="${id}"][data-idx="${i}"]`); if (!el) return;
+        const startX = cellInfo.x; const startY = cellInfo.y; const startTrackIdx = pieceCells.length - 1 - i; 
+        const cellKeyframes = [];
+
+        for (let s = 0; s <= freeSteps; s++) {
+          let pt = getTrackPos(startTrackIdx, s); let offset = (freeSteps + 0.22 > 0) ? (s / (freeSteps + 0.22)) * 0.4 : 0;
+          cellKeyframes.push({ transform: `translate(${(pt.x - startX) * 104}%, ${(pt.y - startY) * 104}%) scale(0.95)`, offset: offset });
+        }
+        let peakPt = getTrackPos(startTrackIdx, freeSteps + 0.22);
+        cellKeyframes.push({ transform: `translate(${(peakPt.x - startX) * 104}%, ${(peakPt.y - startY) * 104}%) scale(0.95)`, offset: 0.4 });
+        let recoilPt = getTrackPos(startTrackIdx, freeSteps);
+        cellKeyframes.push({ transform: `translate(${(recoilPt.x - startX) * 104}%, ${(recoilPt.y - startY) * 104}%) scale(0.95)`, offset: 0.5 });
+        for (let s = freeSteps; s >= 0; s--) {
+          let pt = getTrackPos(startTrackIdx, s); let progress = freeSteps > 0 ? (freeSteps - s) / freeSteps : 1;
+          cellKeyframes.push({ transform: `translate(${(pt.x - startX) * 104}%, ${(pt.y - startY) * 104}%) scale(0.95)`, offset: 0.5 + progress * 0.5 });
+        }
+        el.animate(cellKeyframes, { duration: 300 + freeSteps * 40, easing: 'cubic-bezier(0.25, 1, 0.5, 1)', fill: 'forwards' });
+      });
+
+      const bounceDuration = 300 + freeSteps * 40;
+      setTimeout(() => { 
+        isAnimating = false; activeAnimationsCount--;
+        pieceCells.forEach(cellInfo => {
+          const el = document.querySelector(`[data-id="${id}"][data-idx="${cellInfo.idx}"]`);
+          if (el) el.removeAttribute('data-animating');
+        });
+      }, bounceDuration);
+
+      if (hearts <= 0) {
+        status = 'lose_pending'; stopLiveTimer();
+        if (gameMode === 'serbest') {
+          let currentMod = parseInt(Storage.get('arrows_serbest_seed_mod', 0));
+          Storage.set('arrows_serbest_seed_mod', currentMod + 1);
+          level = getLastCheckpoint(level); Storage.set('arrows_serbest_level', level);
+        }
+        setTimeout(() => { status = 'lose'; playSound('lose'); triggerVibe([300, 100, 300]); showOverlay('lose'); }, 400);
+      }
+    }
+  }
+
+  function showOverlay(kind, finalStars = 0) {
+    overlay.classList.remove('hidden');
+    overlayBtnGroup.innerHTML = ''; overlayStars.innerHTML = ''; 
+
+    if (kind === 'win') {
+      overlayIcon.innerHTML = ICONS.trophy;
+      
+      if (gameMode === 'serbest') {
+        const completedLvl = level; 
+        overlayMsg.textContent = T('congrats'); overlayScore.textContent = T('levelPassed', completedLvl);
+
+        let badgeHTML = '';
+
+        if ((completedLvl) % 10 === 0) {
+          badgeHTML += `<div class="badge-notify" style="background:#2EC4B6; display:flex; align-items:center; gap:8px;"><span style="display:inline-flex;width:18px;height:18px;">${ICONS.checkpointIcon}</span> ${T('checkpointSaved', completedLvl)}</div>`;
+        }
+
+        const trophyMilestones = { 9: T('tr_name_10'), 29: T('tr_name_30'), 49: T('tr_name_50'), 69: T('tr_name_70'), 99: T('tr_name_100') };
+
+        if (trophyMilestones[completedLvl]) {
+          badgeHTML += `<div class="badge-notify" style="background:#F4A261; display:flex; align-items:center; gap:8px;"><span style="display:inline-flex;width:18px;height:18px;">${ICONS.badgeIcon}</span> ${T('trophyAdded', trophyMilestones[completedLvl])}</div>`;
+          overlayIcon.innerHTML = `<div class="trophy-animate" style="display:flex;align-items:center;justify-content:center;width:64px;height:64px;">${ICONS.trophyGold.replace('stroke="#F4A261"', 'stroke="#F4A261" width="64" height="64"')}</div>`;
+        }
+
+        if (badgeHTML !== '') overlayStars.innerHTML = badgeHTML;
+
+        const nextBtn = document.createElement('button'); nextBtn.className = 'btn win'; nextBtn.innerHTML = T('nextLevel') + ICONS.chevron;
+        nextBtn.onclick = () => { level++; startSerbestLevel(level); }; overlayBtnGroup.appendChild(nextBtn);
+      } else {
+        overlayMsg.textContent = T('levelCleared', level); overlayStars.innerHTML = getStarRatingHTML(finalStars); overlayScore.textContent = T('totalScore') + score;
+        if (level < TOTAL_LEVELS) {
+          const nextBtn = document.createElement('button'); nextBtn.className = 'btn win'; nextBtn.innerHTML = T('nextLevel') + ICONS.chevron;
+          nextBtn.onclick = () => startCampaignLevel(level + 1); overlayBtnGroup.appendChild(nextBtn);
+        }
+      }
+
+      const menuBtn = document.createElement('button'); menuBtn.className = 'btn neutral'; menuBtn.innerHTML = T('mainMenu');
+      menuBtn.onclick = () => showScreen('home'); overlayBtnGroup.appendChild(menuBtn);
+
+    } else {
+      overlayIcon.innerHTML = ICONS.skull; overlayMsg.textContent = T('gameOver'); overlayScore.textContent = T('yourScore') + score;
+
+      const retryBtn = document.createElement('button'); retryBtn.className = 'btn lose'; retryBtn.innerHTML = ICONS.rotate + ' ' + T('retry');
+      retryBtn.onclick = () => { if (gameMode === 'serbest') startSerbestLevel(level); else startCampaignLevel(level); }; overlayBtnGroup.appendChild(retryBtn);
+
+      const menuBtn = document.createElement('button'); menuBtn.className = 'btn neutral'; menuBtn.innerHTML = T('mainMenu');
+      menuBtn.onclick = () => showScreen('home'); overlayBtnGroup.appendChild(menuBtn);
+    }
+  }
+
+  function setActiveTab(mode) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`.tab-btn[data-mode="${mode}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      currentDifficulty = e.currentTarget.getAttribute('data-mode'); setActiveTab(currentDifficulty); renderMenu(); 
+    });
+  });
+
+  navLevelsBtn.addEventListener('click', () => showScreen('menu'));
+  navHomeBtn.addEventListener('click', () => showScreen('home'));
+  navSettingsBtn.addEventListener('click', () => showScreen('settings'));
+
+  serbestPlayBtn.addEventListener('click', () => {
+    lockOrientation(); if (tutorialStep === 0) { tutorialStep = 1; Storage.set('tutorial_step', '1'); }
+    startSerbestLevel(parseInt(Storage.get('arrows_serbest_level', 1)));
+  });
+
+  collectionBtn.addEventListener('click', () => showScreen('collection'));
+  collectionBtn.addEventListener('mouseenter', () => { createCollectionHoverParticles(collectionBtn); });
+  collectionBtn.addEventListener('touchstart', () => { createCollectionHoverParticles(collectionBtn); }, { passive: true });
+  backToHomeFromColl.addEventListener('click', () => showScreen('home'));
+
+  primaryPlayBtn.addEventListener('click', () => {
+    lockOrientation(); if (tutorialStep === 0) { tutorialStep = 1; Storage.set('tutorial_step', '1'); }
+    if(currentDifficulty === 'chaos') currentDifficulty = 'normal';
+    let targetLvl = parseInt(Storage.get(`arrows_campaign_unlocked_${currentDifficulty}`, 1));
+    startCampaignLevel(targetLvl > TOTAL_LEVELS ? TOTAL_LEVELS : targetLvl);
+  });
+
+  chaosPlayBtn.addEventListener('click', () => {
+    if (chaosPlayBtn.classList.contains('locked')) { showToast(T('vipLockedMsg')); } else {
+      lockOrientation(); currentDifficulty = 'chaos'; setActiveTab('chaos'); showScreen('menu');
+    }
+  });
+
+  // 🛠️ YENİ: Bilgi butonuna basıldığında mesajı (Toast) gösterir
+  if (chaosInfoBtn) {
+    chaosInfoBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Ana butona tıklanmasını engeller
+      showToast(T('vipLockedMsg'));
+    });
+  }
+
+  toggleMusicBtn.addEventListener('click', () => { settings.music = !settings.music; Storage.set('setting_music', settings.music); updateSettingsUI(); });
+  toggleVibeBtn.addEventListener('click', () => { settings.vibe = !settings.vibe; Storage.set('setting_vibe', settings.vibe); updateSettingsUI(); if(settings.vibe) triggerVibe(80); });
+  toggleThemeBtn.addEventListener('click', () => { settings.theme = settings.theme === 'light' ? 'dark' : 'light'; Storage.set('setting_theme', settings.theme); updateSettingsUI(); });
+  
+  if (replayTutorialBtn) { replayTutorialBtn.addEventListener('click', () => { tutorialStep = 0; Storage.set('tutorial_step', '0'); showScreen('home'); }); }
+
+  resetSaveBtn.addEventListener('click', () => {
+    if (confirm(T('resetConfirm'))) {
+      ['normal', 'zor', 'kabus', 'chaos'].forEach(d => { localStorage.removeItem(`arrows_campaign_unlocked_${d}`); localStorage.removeItem(`arrows_campaign_stars_${d}`); });
+      localStorage.removeItem('arrows_campaign_high_score'); localStorage.removeItem('arrows_serbest_high_score');
+      localStorage.removeItem('arrows_serbest_level'); localStorage.removeItem('arrows_serbest_seed_mod'); localStorage.removeItem('tutorial_step');
+      ['lvl10', 'lvl30', 'lvl50', 'lvl70', 'lvl100'].forEach(id => { localStorage.removeItem(`arrows_trophy_${id}`); });
+      window.location.reload(); 
+    }
+  });
+
+  document.getElementById('langSelect').addEventListener('change', (e) => { currentLang = e.target.value; Storage.set('setting_lang', currentLang); applyLanguage(); });
+  resetBtn.addEventListener('click', () => { if(confirm(T('resetLevel'))) { if (gameMode === 'serbest') startSerbestLevel(level); else startCampaignLevel(level); } });
+
+  backToMenuBtn.addEventListener('click', () => {
+    if (gameMode === 'serbest') {
+      if (status === 'playing') { Storage.set('arrows_serbest_seed_mod', parseInt(Storage.get('arrows_serbest_seed_mod', 0)) + 1); level = getLastCheckpoint(level); Storage.set('arrows_serbest_level', level); }
+      showScreen('home');
+    } else showScreen('menu');
+  });
+
+  setActiveTab(currentDifficulty); updateSettingsUI(); applyLanguage(); showScreen('home');
+</script>
+
+</body>
+</html>
